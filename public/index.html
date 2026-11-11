@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>UNOゲーム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ロビー画面 -->
+    <div id="lobby-screen">
+        <h2>UNO Lobby</h2>
+        <div class="lobby-form">
+            <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
+            <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
+            <div class="button-group">
+                <button id="create-room-btn">部屋を作る</button>
+                <button id="join-room-btn">部屋に参加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-screen" style="display: none;">
+        <h2 id="current-room-display">ルーム ID: -</h2>
+        
+        <div id="game-info">
+            <p id="turn-info">待機中...</p>
+            <div id="player-list-area">
+                <h4>プレイヤー</h4>
+                <ul id="player-list"></ul>
+            </div>
+            
+            <p>場のカード:</p>
+            <div id="discard-area">
+                <div id="top-card" class="card">?</div>
+            </div>
+
+            <!-- 山札から引くボタンの横の部分をこう書き換えます -->
+            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; align-items: center;">
+                <button id="draw-btn">山札から引く</button>
+                <!-- UNO宣言ボタン（初期は無効/非表示） -->
+                <button id="uno-btn" class="uno-call-btn" style="display: none;" disabled>🔥 UNO!</button>
+            </div>
+        </div>
+
+        <h3>あなたの手札</h3>
+        <div id="hand"></div>
+    </div>
+
+    <!-- ワイルドカード用の色選択モーダル -->
+    <div id="color-picker-modal">
+        <div class="color-picker-content">
+            <p>変更する色を選んでください</p>
+            <button class="color-btn red" onclick="selectWildColor('red')"></button>
+            <button class="color-btn blue" onclick="selectWildColor('blue')"></button>
+            <button class="color-btn green" onclick="selectWildColor('green')"></button>
+            <button class="color-btn yellow" onclick="selectWildColor('yellow')"></button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
