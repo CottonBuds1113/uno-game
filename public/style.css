@@ -66,6 +66,18 @@ body {
     color: white;
     box-shadow: inset 4px 4px 8px #150a03, 
                 inset -4px -4px 8px #150a03;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* なめらかに変化させる */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* 普段のうっすらした枠線 */
+}
+
+/* クリックして入力状態（フォーカス）になったとき */
+#player-name-input:focus, #room-id-input:focus {
+    outline: none;
+    border-color: #2ecc71; /* 綺麗なグリーンに光らせる */
+    box-shadow: inset 4px 4px 8px #150a03, 
+                inset -4px -4px 8px #150a03, 
+                0 0 12px rgba(46, 204, 113, 0.4); /* 外側にふんわりとした光の演出 */
+    transform: scale(1.02); /* ほんの少しだけふんわり手前に浮き出る */
 }
 
 .button-group {
