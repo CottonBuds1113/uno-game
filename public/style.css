@@ -27,7 +27,7 @@ body {
     margin-top: 300px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     /* ▼ 横幅やスケールも一緒に変化しながら降りてくるアニメーションに変更 */
-    animation: slideDownWithResize 0.8s cubic-bezier(0.16, 1, 1, 1) forwards;
+    animation: slideDownWithResize 0.8s cubic-bezier(0, 0, 0.58, 1) forwards;
     touch-action: manipulation;
     overflow: hidden;
 }
