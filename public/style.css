@@ -567,3 +567,79 @@ button:disabled {
         font-size: 22px; /* スマホ幅でもはみ出しすぎないサイズに調整 */
     }
 }
+
+/* ====================================
+   おしゃれなトグルスイッチ＆アニメーション
+==================================== */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 5px 0;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-label {
+    font-size: 14px;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* スイッチ全体の箱 */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+
+/* 本体のチェックボックスは非表示にする */
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* スライドする背景部分 */
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #3e2723; /* オフのときの暗い茶色系 */
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 26px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* 中を動く丸いツマミ */
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* ちょっとポヨンと弾むようなイージング */
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* チェックが入った（ON）ときの色と動き */
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #2ecc71; /* 鮮やかなグリーン */
+    border-color: #ffffff;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.5), inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px); /* 右へスライド */
+}
+
+/* ホバーしたときのふんわり感 */
+.toggle-switch:hover .toggle-slider {
+    border-color: #ffffff;
+}

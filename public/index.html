@@ -9,23 +9,27 @@
 <body>
 
     <!-- ロビー画面 -->
-    <div id="lobby-screen">
-        <h2>UNO</h2>
-        <div class="lobby-form">
-            <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
-            <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
-            
-            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px; color: #fff;">
-                <input type="checkbox" id="stack-rule-checkbox" checked style="width: 18px; height: 18px;">
-                ドロー累積（+2/+4重ね）ルールを有効にする
-            </label>
+        <div id="lobby-screen">
+            <h2>UNO</h2>
+            <div class="lobby-form">
+                <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
+                <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
+                
+                <!-- ▼ おしゃれなトグルスイッチ構造に変更 -->
+                <div class="toggle-container">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="stack-rule-checkbox" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">ドロー累積（+2/+4重ね）ルール</span>
+                </div>
 
-            <div class="button-group">
-                <button id="create-room-btn">部屋を作る</button>
-                <button id="join-room-btn">部屋に参加</button>
+                <div class="button-group">
+                    <button id="create-room-btn">部屋を作る</button>
+                    <button id="join-room-btn">部屋に参加</button>
+                </div>
             </div>
         </div>
-    </div>
 
     <!-- ゲーム画面 -->
     <div id="game-screen" style="display: none;">
