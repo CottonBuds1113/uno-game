@@ -30,6 +30,9 @@ body {
 
     /* ▼ 上からスライドインするアニメーションを設定 ▼ */
     animation: slideDownFromTop 0.8s cubic-bezier(0.1, 0.2, 0.36, 1) forwards;
+
+    touch-action: manipulation; /* 連打によるズームを防止 */
+    overflow: hidden; /* 画面全体の余計なスクロールを防止 */
 }
 
 /* 2. ファイルの末尾などにキーフレームを追加 */
