@@ -36,7 +36,7 @@ function createDeck() {
 
 const rooms = {};
 
-function getOrCreateRoom(roomId) {
+function getOrCreateRoom(roomId, isStackEnabled = true) {
     if (!rooms[roomId]) {
         const deck = createDeck();
         let topCard = deck.pop();
@@ -51,7 +51,8 @@ function getOrCreateRoom(roomId) {
             players: [],
             turn: 0,
             direction: 1,
-            pendingDrawCount: 0 // 累積ドロー枚数
+            pendingDrawCount: 0,
+            isStackEnabled: isStackEnabled
         };
     }
     return rooms[roomId];
@@ -87,11 +88,11 @@ function updateGameState(roomId) {
 io.on('connection', (socket) => {
     let playerRoomId = null;
 
-    socket.on('joinRoom', ({ roomId, name }) => {
+    socket.on('joinRoom', ({ roomId, name, isStackEnabled }) => {
         playerRoomId = roomId;
         socket.join(roomId);
 
-        const room = getOrCreateRoom(roomId);
+        const room = getOrCreateRoom(roomId, isStackEnabled);
 
         if (room.deck.length < 7) {
             room.deck = createDeck();
@@ -148,8 +149,7 @@ io.on('connection', (socket) => {
         const card = player.hand[cardIndex];
         const topCard = room.discardPile[room.discardPile.length - 1];
 
-        // ペナルティ累積中の場合、draw2以外は出せないルール
-        if (room.pendingDrawCount > 0) {
+        if (room.isStackEnabled && room.pendingDrawCount > 0) {
             const isCanStack = (topCard.value === 'draw2' && card.value === 'draw2');
             if (!isCanStack) return;
         }
@@ -192,7 +192,18 @@ io.on('connection', (socket) => {
                     room.direction *= -1;
                     if (room.players.length === 2) skipNext = true;
                 } else if (playedCard.value === 'draw2') {
-                    room.pendingDrawCount += 2; // 累積に+2枚
+                    if (room.isStackEnabled) {
+                        room.pendingDrawCount += 2;
+                    } else {
+                        const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
+                        const nextPlayer = room.players[nextTurnIndex];
+                        for (let i = 0; i < 2; i++) {
+                            if (room.deck.length === 0) room.deck = createDeck();
+                            nextPlayer.hand.push(room.deck.pop());
+                        }
+                        nextPlayer.hasCalledUno = false;
+                        skipNext = true;
+                    }
                 }
             }
 
@@ -210,8 +221,7 @@ io.on('connection', (socket) => {
 
         const player = room.players[room.turn];
 
-        if (room.pendingDrawCount > 0) {
-            // 溜まったペナルティを全て受けてターン終了
+        if (room.isStackEnabled && room.pendingDrawCount > 0) {
             for (let i = 0; i < room.pendingDrawCount; i++) {
                 if (room.deck.length === 0) room.deck = createDeck();
                 player.hand.push(room.deck.pop());

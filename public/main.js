@@ -47,8 +47,13 @@ function joinRoom() {
         return;
     }
 
+    // チェックボックスの状態を取得（チェックされていれば true）
+    const checkbox = document.getElementById('stack-rule-checkbox');
+    const isStackEnabled = checkbox ? checkbox.checked : true;
+
     currentRoomId = roomId;
-    socket.emit('joinRoom', { roomId, name });
+    // 設定も含めてサーバーへ送信
+    socket.emit('joinRoom', { roomId, name, isStackEnabled });
 }
 
 socket.on('joinedRoom', (roomId) => {
