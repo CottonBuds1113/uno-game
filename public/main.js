@@ -16,6 +16,10 @@ const drawBtn = document.getElementById('draw-btn');
 const unoBtn = document.getElementById('uno-btn');
 const colorPickerModal = document.getElementById('color-picker-modal');
 
+const unoOverlay = document.getElementById('uno-overlay');
+const unoScrollingText = document.getElementById('uno-scrolling-text');
+let unoAnimationTimeout = null;
+
 let myId = '';
 let currentRoomId = '';
 let latestGameState = null;
@@ -60,6 +64,28 @@ socket.on('joinedRoom', (roomId) => {
     currentRoomDisplay.innerText = `ルーム ID: ${roomId}`;
 });
 
+// UNO宣言テロップアニメーションの再生
+socket.on('unoDeclared', ({ playerId, playerName }) => {
+    if (unoAnimationTimeout) {
+        clearTimeout(unoAnimationTimeout);
+    }
+
+    if (playerId === myId) {
+        unoScrollingText.innerText = 'UNO！';
+    } else {
+        unoScrollingText.innerText = `${playerName}がUNOを宣言した`;
+    }
+
+    // アニメーションを最初から再生させるためのリセット処理
+    unoOverlay.style.display = 'none';
+    void unoOverlay.offsetWidth; // リフローを強制
+    unoOverlay.style.display = 'flex';
+
+    unoAnimationTimeout = setTimeout(() => {
+        unoOverlay.style.display = 'none';
+    }, 2600);
+});
+
 function getCardLabel(card) {
     if (!card) return '';
     if (card.type === 'number') return card.value;
@@ -67,13 +93,12 @@ function getCardLabel(card) {
     if (card.value === 'reverse') return '🔄';
     if (card.value === 'draw2') return '+2';
     if (card.value === 'wild') return '🌈';
-    if (card.value === 'wild_draw4') return '+4'; // 【追加】ワイルド+4のラベル
+    if (card.value === 'wild_draw4') return '+4';
     return card.value;
 }
 
 function createCardElement(card) {
     const cardDiv = document.createElement('div');
-    // wild_draw4 のときは見た目を wild クラスにする
     const colorClass = card.value === 'wild_draw4' ? 'wild' : card.color;
     cardDiv.className = `card ${colorClass}`;
 
@@ -87,7 +112,6 @@ function createCardElement(card) {
     center.className = 'card-center';
     center.innerText = label;
 
-    // +4 のときは文字サイズを少し調整
     if (card.value === 'wild_draw4') {
         center.style.fontSize = '28px';
     }

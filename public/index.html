@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scalr=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>UNOゲーム</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,10 +14,10 @@
         <div class="lobby-form">
             <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
             <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
-
-            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px;">
+            
+            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px; color: #fff;">
                 <input type="checkbox" id="stack-rule-checkbox" checked style="width: 18px; height: 18px;">
-                ドロー累積（+2重ね）ルールを有効にする
+                ドロー累積（+2/+4重ね）ルールを有効にする
             </label>
 
             <div class="button-group">
@@ -43,10 +43,8 @@
                 <div id="top-card" class="card">?</div>
             </div>
 
-            <!-- 山札から引くボタンの横の部分をこう書き換えます -->
             <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; align-items: center;">
                 <button id="draw-btn">山札から引く</button>
-                <!-- UNO宣言ボタン（初期は無効/非表示） -->
                 <button id="uno-btn" class="uno-call-btn" style="display: none;" disabled>🔥 UNO!</button>
             </div>
         </div>
@@ -64,6 +62,11 @@
             <button class="color-btn green" onclick="selectWildColor('green')"></button>
             <button class="color-btn yellow" onclick="selectWildColor('yellow')"></button>
         </div>
+    </div>
+
+    <!-- UNO宣言時の暗転＆流れるテロップ演出 -->
+    <div id="uno-overlay">
+        <div id="uno-scrolling-text" class="uno-scrolling-text"></div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>

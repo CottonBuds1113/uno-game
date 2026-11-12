@@ -1,18 +1,17 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     text-align: center;
-    background-image: url('green-bg2.jpg'); /* 画像のファイル名やパスを指定 */
-    background-size: cover;          /* 画面全体に綺麗に広げる */
-    background-position: center;     /* 画像の中央を基準にする */
-    background-repeat: no-repeat;    /* 画像がタイルのように繰り返さないようにする */
-    background-attachment: fixed;    /* 画面をスクロールしても背景を固定する */
+    background-image: url('green-bg2.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: white;
     margin: 0;
     padding: 20px;
     user-select: none;
 }
 
-/* 1. #lobby-screen に animation を追加 */
 #lobby-screen {
     background-image: url('brown-bg.jpg');
     background-size: cover;         
@@ -27,27 +26,23 @@ body {
     width: 90%;
     margin-top: 50px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-
-    /* ▼ 上からスライドインするアニメーションを設定 ▼ */
     animation: slideDownFromTop 0.8s cubic-bezier(0.1, 0.2, 0.36, 1) forwards;
-
-    touch-action: manipulation; /* 連打によるズームを防止 */
-    overflow: hidden; /* 画面全体の余計なスクロールを防止 */
+    touch-action: manipulation;
+    overflow: hidden;
 }
 
-/* 2. ファイルの末尾などにキーフレームを追加 */
 @keyframes slideDownFromTop {
     0% {
-        transform: translateY(-120vh); /* 画面の遠く上方からスタート */
-        opacity: 0;                   /* 最初は透明 */
+        transform: translateY(-120vh);
+        opacity: 0;
     }
     100% {
-        transform: translateY(0);      /* 定位置に到着 */
-        opacity: 1;                   /* 完全表示 */
+        transform: translateY(0);
+        opacity: 1;
     }
 }
 
-#lobby-screen h2{
+#lobby-screen h2 {
     font-size: 50px;
     text-decoration: underline;
 }
@@ -58,7 +53,7 @@ body {
     gap: 15px;
 }
 
-.lobby-form input {
+.lobby-form input[type="text"] {
     padding: 12px;
     font-size: 16px;
     border-radius: 6px;
@@ -70,8 +65,7 @@ body {
     background-color: #21170a;
     color: white;
     box-shadow: inset 4px 4px 8px #150a03, 
-              inset -4px -4px 8px #150a03;
-    
+                inset -4px -4px 8px #150a03;
 }
 
 .button-group {
@@ -165,7 +159,6 @@ button:disabled {
     user-select: none;
 }
 
-/* 中央の白い斜め楕円 */
 .card::before {
     content: '';
     position: absolute;
@@ -179,7 +172,6 @@ button:disabled {
     z-index: 1;
 }
 
-/* 中央のメイン文字 */
 .card-center {
     position: absolute;
     top: 50%;
@@ -191,7 +183,6 @@ button:disabled {
     text-shadow: 1px 2px 2px rgba(0,0,0,0.3);
 }
 
-/* 左上・右下のコーナー文字 */
 .card-corner-top, .card-corner-bottom {
     position: absolute;
     font-size: 11px;
@@ -212,7 +203,6 @@ button:disabled {
     transform: rotate(180deg);
 }
 
-/* 各カラー設定 */
 .red { background-color: #e74c3c; }
 .red .card-center { color: #e74c3c; }
 
@@ -232,7 +222,6 @@ button:disabled {
 }
 .wild .card-center { color: #2c3e50; }
 
-/* 手札の操作スタイル */
 #hand .card {
     cursor: grab;
 }
@@ -255,7 +244,6 @@ button:disabled {
     cursor: default;
 }
 
-/* 場のカードが更新されたときのアニメーション */
 .play-impact {
     animation: cardImpact 0.3s ease-out;
 }
@@ -265,7 +253,6 @@ button:disabled {
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* ドロー時に追加されるカードのポップインアニメーション */
 .card-draw-anim {
     animation: drawPopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -275,7 +262,6 @@ button:disabled {
     100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-/* ワイルド色選択モーダル */
 #color-picker-modal {
     display: none;
     position: fixed;
@@ -340,9 +326,7 @@ button:disabled {
     font-weight: bold;
 }
 
-/* 既存のstyle.cssの末尾に追加してください */
-
-/* UNO宣言ボタンのアニメーションとデザイン */
+/* UNO宣言ボタン */
 .uno-call-btn {
     background: linear-gradient(135deg, #e74c3c, #f1c40f) !important;
     color: white !important;
@@ -365,6 +349,14 @@ button:disabled {
     transform: scale(0.95) !important;
 }
 
+.uno-call-btn:disabled {
+    background: #27ae60 !important;
+    animation: none !important;
+    cursor: default;
+    opacity: 0.9 !important;
+    transform: scale(1) !important;
+}
+
 /* UNO言い忘れ時の指摘ボタン */
 .callout-penalty-btn {
     background-color: #e74c3c;
@@ -381,14 +373,66 @@ button:disabled {
     background-color: #c0392b;
 }
 
-/* 既存の .uno-call-btn の下に追記 */
+/* ====================================
+   UNO宣言時の暗転＆流れるテロップ演出
+==================================== */
+#uno-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.65); /* 背景を少し暗くする */
+    pointer-events: none; /* 操作を邪魔しない */
+    z-index: 3000;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    animation: overlayFade 2.6s ease-in-out forwards;
+}
 
-.uno-call-btn:disabled {
-    background: #27ae60 !important; /* 成功時は緑色にする */
-    animation: none !important;
-    cursor: default;
-    opacity: 0.9 !important;
-    transform: scale(1) !important;
+@keyframes overlayFade {
+    0% { opacity: 0; }
+    12% { opacity: 1; }
+    85% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.uno-scrolling-text {
+    position: absolute;
+    white-space: nowrap;
+    color: #ffffff;
+    font-style: italic;
+    font-weight: 800;
+    font-size: 36px;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 14px rgba(0, 0, 0, 0.9);
+    animation: slideAcrossWithPause 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 左画面外から中央でゆったり減速し、右画面外へ抜ける緩急アニメーション */
+@keyframes slideAcrossWithPause {
+    0% {
+        left: -10%;
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    22% {
+        left: 48%;
+        transform: translateX(-50%);
+        opacity: 1;
+    }
+    75% {
+        left: 52%;
+        transform: translateX(-50%);
+        opacity: 1;
+    }
+    100% {
+        left: 110%;
+        transform: translateX(0%);
+        opacity: 0;
+    }
 }
 
 /* ====================================
@@ -396,18 +440,18 @@ button:disabled {
 ==================================== */
 @media screen and (max-width: 768px) {
     body {
-        padding: 0; /* 画面全体の余白をスリムにする */
+        padding: 10px;
     }
 
     #lobby-screen {
-        width: 100% !important;     /* スマホの画面幅いっぱいに広げる */
+        width: 100% !important;
         max-width: 100%;
         box-sizing: border-box;
         padding-top: 25px;
     }
 
     #game-info {
-        width: 100% !important;     /* スマホの画面幅いっぱいに広げる */
+        width: 100% !important;
         max-width: 100%;
         padding: 12px;
         box-sizing: border-box;
@@ -415,11 +459,10 @@ button:disabled {
 
     #hand {
         max-width: 100%;
-        gap: 6px; /* カード同士の間隔を少し狭める */
+        gap: 6px;
         padding: 5px;
     }
 
-    /* スマホではカードを少しコンパクトにする（オプション） */
     .card {
         width: 62px;
         height: 90px;
@@ -432,5 +475,9 @@ button:disabled {
 
     .card-center {
         font-size: 26px;
+    }
+
+    .uno-scrolling-text {
+        font-size: 22px; /* スマホ幅でもはみ出しすぎないサイズに調整 */
     }
 }

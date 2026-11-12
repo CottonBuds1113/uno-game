@@ -27,12 +27,10 @@ function createDeck() {
         }
     }
 
-    // 通常のワイルド 4枚
     for (let i = 0; i < 4; i++) {
         deck.push({ color: 'wild', type: 'wild', value: 'wild', id: `wild-${Math.random()}` });
     }
 
-    // 【追加】ワイルド ドロー4（+4） 4枚
     for (let i = 0; i < 4; i++) {
         deck.push({ color: 'wild', type: 'wild_draw4', value: 'wild_draw4', id: `wild_draw4-${Math.random()}` });
     }
@@ -121,9 +119,13 @@ io.on('connection', (socket) => {
         const room = rooms[roomId];
         if (!room) return;
         const player = room.players.find(p => p.id === socket.id);
-        if (player) {
+        if (player && player.hand.length === 1 && !player.hasCalledUno) {
             player.hasCalledUno = true;
-            io.to(roomId).emit('announce', `${player.name} が公式に「UNO！」と叫びました！🔥`);
+            // テロップ演出用イベントをルーム全員に送信
+            io.to(roomId).emit('unoDeclared', {
+                playerId: player.id,
+                playerName: player.name
+            });
             updateGameState(roomId);
         }
     });
@@ -155,14 +157,11 @@ io.on('connection', (socket) => {
         const card = player.hand[cardIndex];
         const topCard = room.discardPile[room.discardPile.length - 1];
 
-        // 累積ペナルティ中のルール判定
         if (room.isStackEnabled && room.pendingDrawCount > 0) {
             if (topCard.value === 'draw2') {
-                // 場が +2 のときは +2 または wild_draw4 を重ねられる
                 const isCanStack = (card.value === 'draw2' || card.value === 'wild_draw4');
                 if (!isCanStack) return;
             } else if (topCard.value === 'wild_draw4') {
-                // 場が +4 のときは +4 のみ重ねられる
                 const isCanStack = (card.value === 'wild_draw4');
                 if (!isCanStack) return;
             }
@@ -220,7 +219,7 @@ io.on('connection', (socket) => {
                     }
                 } else if (playedCard.value === 'wild_draw4') {
                     if (room.isStackEnabled) {
-                        room.pendingDrawCount += 4; // 累積に+4枚
+                        room.pendingDrawCount += 4;
                     } else {
                         const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
                         const nextPlayer = room.players[nextTurnIndex];
