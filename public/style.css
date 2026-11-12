@@ -41,12 +41,12 @@ body {
     70% {
         transform: translateY(10px) scale(1.02); /* 着地手前でちょっとだけ弾む */
         opacity: 1;
-        max-width: 500px; /* 勢い余って少しだけ広がる */
+        max-width: 200px; /* 少し小さい */
     }
     100% {
         transform: translateY(0) scale(1);
         opacity: 1;
-        max-width: 400px; /* 最終的なジャストサイズにビシッと定着 */
+        max-width: 500px; /* 最終的なジャストサイズにビシッと定着 */
     }
 }
 
