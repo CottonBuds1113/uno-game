@@ -27,8 +27,14 @@ function createDeck() {
         }
     }
 
+    // 通常のワイルド 4枚
     for (let i = 0; i < 4; i++) {
         deck.push({ color: 'wild', type: 'wild', value: 'wild', id: `wild-${Math.random()}` });
+    }
+
+    // 【追加】ワイルド ドロー4（+4） 4枚
+    for (let i = 0; i < 4; i++) {
+        deck.push({ color: 'wild', type: 'wild_draw4', value: 'wild_draw4', id: `wild_draw4-${Math.random()}` });
     }
 
     return deck.sort(() => Math.random() - 0.5);
@@ -149,9 +155,17 @@ io.on('connection', (socket) => {
         const card = player.hand[cardIndex];
         const topCard = room.discardPile[room.discardPile.length - 1];
 
+        // 累積ペナルティ中のルール判定
         if (room.isStackEnabled && room.pendingDrawCount > 0) {
-            const isCanStack = (topCard.value === 'draw2' && card.value === 'draw2');
-            if (!isCanStack) return;
+            if (topCard.value === 'draw2') {
+                // 場が +2 のときは +2 または wild_draw4 を重ねられる
+                const isCanStack = (card.value === 'draw2' || card.value === 'wild_draw4');
+                if (!isCanStack) return;
+            } else if (topCard.value === 'wild_draw4') {
+                // 場が +4 のときは +4 のみ重ねられる
+                const isCanStack = (card.value === 'wild_draw4');
+                if (!isCanStack) return;
+            }
         }
 
         let isPlayable = false;
@@ -198,6 +212,19 @@ io.on('connection', (socket) => {
                         const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
                         const nextPlayer = room.players[nextTurnIndex];
                         for (let i = 0; i < 2; i++) {
+                            if (room.deck.length === 0) room.deck = createDeck();
+                            nextPlayer.hand.push(room.deck.pop());
+                        }
+                        nextPlayer.hasCalledUno = false;
+                        skipNext = true;
+                    }
+                } else if (playedCard.value === 'wild_draw4') {
+                    if (room.isStackEnabled) {
+                        room.pendingDrawCount += 4; // 累積に+4枚
+                    } else {
+                        const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
+                        const nextPlayer = room.players[nextTurnIndex];
+                        for (let i = 0; i < 4; i++) {
                             if (room.deck.length === 0) room.deck = createDeck();
                             nextPlayer.hand.push(room.deck.pop());
                         }

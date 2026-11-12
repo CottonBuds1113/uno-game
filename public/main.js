@@ -47,12 +47,10 @@ function joinRoom() {
         return;
     }
 
-    // チェックボックスの状態を取得（チェックされていれば true）
     const checkbox = document.getElementById('stack-rule-checkbox');
     const isStackEnabled = checkbox ? checkbox.checked : true;
 
     currentRoomId = roomId;
-    // 設定も含めてサーバーへ送信
     socket.emit('joinRoom', { roomId, name, isStackEnabled });
 }
 
@@ -69,12 +67,15 @@ function getCardLabel(card) {
     if (card.value === 'reverse') return '🔄';
     if (card.value === 'draw2') return '+2';
     if (card.value === 'wild') return '🌈';
+    if (card.value === 'wild_draw4') return '+4'; // 【追加】ワイルド+4のラベル
     return card.value;
 }
 
 function createCardElement(card) {
     const cardDiv = document.createElement('div');
-    cardDiv.className = `card ${card.color}`;
+    // wild_draw4 のときは見た目を wild クラスにする
+    const colorClass = card.value === 'wild_draw4' ? 'wild' : card.color;
+    cardDiv.className = `card ${colorClass}`;
 
     const label = getCardLabel(card);
 
@@ -85,6 +86,11 @@ function createCardElement(card) {
     const center = document.createElement('div');
     center.className = 'card-center';
     center.innerText = label;
+
+    // +4 のときは文字サイズを少し調整
+    if (card.value === 'wild_draw4') {
+        center.style.fontSize = '28px';
+    }
 
     const cornerBottom = document.createElement('div');
     cornerBottom.className = 'card-corner-bottom';
@@ -103,7 +109,7 @@ socket.on('gameState', (data) => {
 
     if (isMyTurn) {
         if (data.pendingDrawCount > 0) {
-            turnInfo.innerText = `🔥 警告！+${data.pendingDrawCount} 累積中！+2カードを重ねるか、山札から ${data.pendingDrawCount}枚 引いてください`;
+            turnInfo.innerText = `🔥 警告！+${data.pendingDrawCount} 累積中！カードを重ねるか、山札から ${data.pendingDrawCount}枚 引いてください`;
             turnInfo.style.color = "#e74c3c";
             drawBtn.innerText = `山札から ${data.pendingDrawCount}枚引く`;
         } else {
@@ -151,7 +157,8 @@ socket.on('gameState', (data) => {
     if (data.topCard) {
         const topCardElement = document.getElementById('top-card');
         if (topCardElement) {
-            topCardElement.className = `card ${data.topCard.color} play-impact`;
+            const topColorClass = data.topCard.value === 'wild_draw4' ? 'wild' : data.topCard.color;
+            topCardElement.className = `card ${topColorClass} play-impact`;
 
             const label = getCardLabel(data.topCard);
             topCardElement.innerHTML = '';
@@ -167,7 +174,7 @@ socket.on('gameState', (data) => {
             if (data.topCard.color === 'wild') {
                 const colorNames = { red: '赤', blue: '青', green: '緑', yellow: '黄' };
                 const designated = colorNames[data.topCard.designatedColor] || '赤';
-                center.innerText = `🌈\n(${designated})`;
+                center.innerText = `${label}\n(${designated})`;
                 center.style.fontSize = '16px';
             }
 
@@ -231,8 +238,11 @@ function renderHand() {
         let isPlayable = false;
         if (isMyTurn && topCard) {
             if (pendingDrawCount > 0) {
-                // 累積中は「同じdraw2」だけが出せる
-                isPlayable = (topCard.value === 'draw2' && card.value === 'draw2');
+                if (topCard.value === 'draw2') {
+                    isPlayable = (card.value === 'draw2' || card.value === 'wild_draw4');
+                } else if (topCard.value === 'wild_draw4') {
+                    isPlayable = (card.value === 'wild_draw4');
+                }
             } else {
                 if (card.color === 'wild') {
                     isPlayable = true;
