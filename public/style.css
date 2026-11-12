@@ -22,35 +22,26 @@ body {
     border: hsla(0, 0%, 100%, 0.8) solid 2px;
     border-radius: 12px;
     display: inline-block;
-    max-width: 400px;
+    max-width: 600px;
     width: 90%;
     margin-top: 300px;
-    /* 影を少し重厚にして「机っぽさ」を強調 */
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5); 
-    /* ▼ 極端なイーズアウト（cubic-bezier）でスーッと重そうに止まる */
-    animation: heavyDeskSlide 0.9s cubic-bezier(0.05, 0.9, 0.1, 1) forwards;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    /* ▼ 跳ね返りなしの極端なイーズアウトで、ピタッと硬く止める */
+    animation: simpleDeskSlide 0.85s cubic-bezier(0.05, 0.9, 0.1, 1) forwards;
     touch-action: manipulation;
     overflow: hidden;
 }
 
-@keyframes heavyDeskSlide {
+@keyframes simpleDeskSlide {
     0% {
-        transform: translateY(-130vh) scale(0.65);
+        transform: translateY(-120vh) scale(0.8);
         opacity: 0;
-        max-width: 220px;
-    }
-    /* 50%付近までは重そうにスッと落ちてくる */
-    50% {
-        opacity: 1;
-    }
-    /* 着地寸前：極端な減速（ease-outの強い形）でスーッと減速しつつ横幅が定着 */
-    85% {
-        transform: translateY(4px) scale(1.01); /* 重みでほんの少しだけ下へ沈む */
-        max-width: 402px; /* 勢いで少しだけオーバーシュート */
+        max-width: 240px;
     }
     100% {
-        transform: translateY(0) scale(1); /* ピタッと硬く静止 */
-        max-width: 400px;
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        max-width: 600px;
     }
 }
 
