@@ -26,7 +26,6 @@ body {
     max-width: 400px;
     width: 90%;
     margin-top: 50px;
-    margin: 0 auto;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 
     /* ▼ 上からスライドインするアニメーションを設定 ▼ */
@@ -397,7 +396,7 @@ button:disabled {
 ==================================== */
 @media screen and (max-width: 768px) {
     body {
-        padding: 10px; /* 画面全体の余白をスリムにする */
+        padding: 0; /* 画面全体の余白をスリムにする */
     }
 
     #game-info {
