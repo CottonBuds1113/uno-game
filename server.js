@@ -50,7 +50,8 @@ function getOrCreateRoom(roomId) {
             discardPile: [topCard],
             players: [],
             turn: 0,
-            direction: 1
+            direction: 1,
+            pendingDrawCount: 0 // 累積ドロー枚数
         };
     }
     return rooms[roomId];
@@ -74,7 +75,8 @@ function updateGameState(roomId) {
             hasCalledUno: p.hasCalledUno 
         })),
         topCard: room.discardPile[room.discardPile.length - 1],
-        currentTurnId: room.players[room.turn] ? room.players[room.turn].id : null
+        currentTurnId: room.players[room.turn] ? room.players[room.turn].id : null,
+        pendingDrawCount: room.pendingDrawCount
     });
 
     room.players.forEach(p => {
@@ -108,25 +110,22 @@ io.on('connection', (socket) => {
         updateGameState(roomId);
     });
 
-    // UNO宣言を受け取る処理
     socket.on('callUno', ({ roomId }) => {
         const room = rooms[roomId];
         if (!room) return;
         const player = room.players.find(p => p.id === socket.id);
         if (player) {
             player.hasCalledUno = true;
-            io.to(roomId).emit('announce', `${player.name} が「UNO！」と叫びました！🔥`);
+            io.to(roomId).emit('announce', `${player.name} が公式に「UNO！」と叫びました！🔥`);
             updateGameState(roomId);
         }
     });
 
-    // 他のプレイヤーからの指摘（UNO言い忘れペナルティ）
     socket.on('reportUnoFailure', ({ roomId, targetPlayerId }) => {
         const room = rooms[roomId];
         if (!room) return;
         const targetPlayer = room.players.find(p => p.id === targetPlayerId);
         
-        // 手札が1枚なのにUNO宣言していない場合ペナルティ（2枚ドロー）
         if (targetPlayer && targetPlayer.hand.length === 1 && !targetPlayer.hasCalledUno) {
             for (let i = 0; i < 2; i++) {
                 if (room.deck.length === 0) room.deck = createDeck();
@@ -149,6 +148,12 @@ io.on('connection', (socket) => {
         const card = player.hand[cardIndex];
         const topCard = room.discardPile[room.discardPile.length - 1];
 
+        // ペナルティ累積中の場合、draw2以外は出せないルール
+        if (room.pendingDrawCount > 0) {
+            const isCanStack = (topCard.value === 'draw2' && card.value === 'draw2');
+            if (!isCanStack) return;
+        }
+
         let isPlayable = false;
         if (card.color === 'wild') {
             isPlayable = true;
@@ -169,7 +174,6 @@ io.on('connection', (socket) => {
 
             room.discardPile.push(playedCard);
 
-            // 手札が2枚以上増えた場合はUNO宣言をリセット
             if (player.hand.length > 1) {
                 player.hasCalledUno = false;
             }
@@ -181,21 +185,14 @@ io.on('connection', (socket) => {
             }
 
             let skipNext = false;
-            if (playedCard.type === 'action') {
+            if (playedCard.type === 'action' || playedCard.color === 'wild') {
                 if (playedCard.value === 'skip') {
                     skipNext = true;
                 } else if (playedCard.value === 'reverse') {
                     room.direction *= -1;
                     if (room.players.length === 2) skipNext = true;
                 } else if (playedCard.value === 'draw2') {
-                    const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
-                    const nextPlayer = room.players[nextTurnIndex];
-                    for (let i = 0; i < 2; i++) {
-                        if (room.deck.length === 0) room.deck = createDeck();
-                        nextPlayer.hand.push(room.deck.pop());
-                    }
-                    nextPlayer.hasCalledUno = false;
-                    skipNext = true;
+                    room.pendingDrawCount += 2; // 累積に+2枚
                 }
             }
 
@@ -212,11 +209,22 @@ io.on('connection', (socket) => {
         if (room.players[room.turn].id !== socket.id) return;
 
         const player = room.players[room.turn];
-        if (room.deck.length === 0) room.deck = createDeck();
 
-        player.hand.push(room.deck.pop());
-        player.hasCalledUno = false; // 引いたらUNO宣言リセット
+        if (room.pendingDrawCount > 0) {
+            // 溜まったペナルティを全て受けてターン終了
+            for (let i = 0; i < room.pendingDrawCount; i++) {
+                if (room.deck.length === 0) room.deck = createDeck();
+                player.hand.push(room.deck.pop());
+            }
+            io.to(roomId).emit('announce', `💥 ${player.name} は累積ペナルティで ${room.pendingDrawCount}枚 引かされました！`);
+            room.pendingDrawCount = 0;
+        } else {
+            if (room.deck.length === 0) room.deck = createDeck();
+            player.hand.push(room.deck.pop());
+            player.hasCalledUno = false;
+        }
 
+        room.turn += room.direction;
         updateGameState(roomId);
     });
 

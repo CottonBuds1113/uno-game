@@ -22,7 +22,7 @@ let latestGameState = null;
 let myCurrentHand = [];
 let previousHandLength = 0;
 let pendingWildCardIndex = null;
-let hasDeclaredUnoThisTurn = false; // 自分がこのターンにUNO宣言したか
+let hasDeclaredUnoThisTurn = false;
 
 socket.on('connect', () => {
     myId = socket.id;
@@ -97,12 +97,24 @@ socket.on('gameState', (data) => {
     const isMyTurn = (data.currentTurnId === myId);
 
     if (isMyTurn) {
-        turnInfo.innerText = "★ あなたの番です！出せるカードを場に出すか、山札から引いてください";
-        turnInfo.style.color = "#2ecc71";
+        if (data.pendingDrawCount > 0) {
+            turnInfo.innerText = `🔥 警告！+${data.pendingDrawCount} 累積中！+2カードを重ねるか、山札から ${data.pendingDrawCount}枚 引いてください`;
+            turnInfo.style.color = "#e74c3c";
+            drawBtn.innerText = `山札から ${data.pendingDrawCount}枚引く`;
+        } else {
+            turnInfo.innerText = "★ あなたの番です！出せるカードを場に出すか、山札から引いてください";
+            turnInfo.style.color = "#2ecc71";
+            drawBtn.innerText = "山札から引く";
+        }
         drawBtn.disabled = false;
     } else {
-        turnInfo.innerText = "相手のターンを待っています...";
+        if (data.pendingDrawCount > 0) {
+            turnInfo.innerText = `⚠️ 現在 +${data.pendingDrawCount} 累積中！次の人の運命やいかに…`;
+        } else {
+            turnInfo.innerText = "相手のターンを待っています...";
+        }
         turnInfo.style.color = "#ecf0f1";
+        drawBtn.innerText = "山札から引く";
         drawBtn.disabled = true;
     }
 
@@ -169,7 +181,6 @@ socket.on('gameState', (data) => {
 
 socket.on('yourHand', (hand) => {
     myCurrentHand = hand;
-    // 手札が2枚以上になったらUNO宣言フラグをリセット
     if (hand.length > 1) {
         hasDeclaredUnoThisTurn = false;
         unoBtn.disabled = false;
@@ -187,7 +198,6 @@ function renderHand() {
     handDiv.innerHTML = '';
     if (!myCurrentHand) return;
 
-    // 【修正】手札が「残り1枚」のときだけUNOボタンを表示する
     if (myCurrentHand.length === 1) {
         unoBtn.style.display = 'inline-block';
         if (hasDeclaredUnoThisTurn) {
@@ -203,6 +213,7 @@ function renderHand() {
 
     const isMyTurn = latestGameState && (latestGameState.currentTurnId === myId);
     const topCard = latestGameState ? latestGameState.topCard : null;
+    const pendingDrawCount = latestGameState ? latestGameState.pendingDrawCount : 0;
     const isNewCardDrawn = myCurrentHand.length > previousHandLength && previousHandLength !== 0;
 
     myCurrentHand.forEach((card, index) => {
@@ -214,14 +225,19 @@ function renderHand() {
 
         let isPlayable = false;
         if (isMyTurn && topCard) {
-            if (card.color === 'wild') {
-                isPlayable = true;
-            } else if (topCard.color === 'wild') {
-                isPlayable = (card.color === topCard.designatedColor);
+            if (pendingDrawCount > 0) {
+                // 累積中は「同じdraw2」だけが出せる
+                isPlayable = (topCard.value === 'draw2' && card.value === 'draw2');
             } else {
-                const isSameColor = card.color === topCard.color;
-                const isSameValue = (card.value === topCard.value);
-                isPlayable = isSameColor || isSameValue;
+                if (card.color === 'wild') {
+                    isPlayable = true;
+                } else if (topCard.color === 'wild') {
+                    isPlayable = (card.color === topCard.designatedColor);
+                } else {
+                    const isSameColor = card.color === topCard.color;
+                    const isSameValue = (card.value === topCard.value);
+                    isPlayable = isSameColor || isSameValue;
+                }
             }
         }
 
@@ -302,7 +318,6 @@ function renderHand() {
     previousHandLength = myCurrentHand.length;
 }
 
-// 【修正】UNOボタンを押したときの確証（フィードバック）を追加
 unoBtn.onclick = () => {
     hasDeclaredUnoThisTurn = true;
     unoBtn.disabled = true;
