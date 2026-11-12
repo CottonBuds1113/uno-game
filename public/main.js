@@ -70,6 +70,7 @@ socket.on('unoDeclared', ({ playerId, playerName }) => {
         clearTimeout(unoAnimationTimeout);
     }
 
+    // ▼ 【修正】自分が宣言した本人なら「UNO！」、他の人なら「〇〇がUNOを宣言した」と正しく出し分ける
     if (playerId === myId) {
         unoScrollingText.innerText = 'UNO！';
     } else {
