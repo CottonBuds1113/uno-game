@@ -24,21 +24,29 @@ body {
     display: inline-block;
     max-width: 400px;
     width: 90%;
-    margin-top: 200px;
+    margin-top: 300px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    animation: slideDownFromTop 0.8s cubic-bezier(0.1, 0.2, 0.36, 1) forwards;
+    /* ▼ 横幅やスケールも一緒に変化しながら降りてくるアニメーションに変更 */
+    animation: slideDownWithResize 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     touch-action: manipulation;
     overflow: hidden;
 }
 
-@keyframes slideDownFromTop {
+@keyframes slideDownWithResize {
     0% {
-        transform: translateY(-120vh);
+        transform: translateY(-120vh) scale(0.7);
         opacity: 0;
+        max-width: 240px; /* 最初は細くコンパクトな状態からスタート */
+    }
+    70% {
+        transform: translateY(10px) scale(1.02); /* 着地手前でちょっとだけ弾む */
+        opacity: 1;
+        max-width: 410px; /* 勢い余って少しだけ広がる */
     }
     100% {
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
         opacity: 1;
+        max-width: 400px; /* 最終的なジャストサイズにビシッと定着 */
     }
 }
 
