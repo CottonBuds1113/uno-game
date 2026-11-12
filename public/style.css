@@ -24,7 +24,7 @@ body {
     display: inline-block;
     max-width: 400px;
     width: 90%;
-    margin-top: 50px;
+    margin-top: 200px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     animation: slideDownFromTop 0.8s cubic-bezier(0.1, 0.2, 0.36, 1) forwards;
     touch-action: manipulation;
