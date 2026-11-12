@@ -36,12 +36,12 @@ body {
     0% {
         transform: translateY(-120vh) scale(0.7);
         opacity: 0;
-        max-width: 20px; /* 最初は細くコンパクトな状態からスタート */
+        max-width: 5px; /* 最初は細くコンパクトな状態からスタート */
     }
     70% {
         transform: translateY(10px) scale(1.02); /* 着地手前でちょっとだけ弾む */
         opacity: 1;
-        max-width: 420px; /* 勢い余って少しだけ広がる */
+        max-width: 500px; /* 勢い余って少しだけ広がる */
     }
     100% {
         transform: translateY(0) scale(1);
