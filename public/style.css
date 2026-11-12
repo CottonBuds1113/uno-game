@@ -399,6 +399,12 @@ button:disabled {
         padding: 0; /* 画面全体の余白をスリムにする */
     }
 
+    #lobby-screen {
+        width: 100% !important;     /* スマホの画面幅いっぱいに広げる */
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
     #game-info {
         width: 100% !important;     /* スマホの画面幅いっぱいに広げる */
         max-width: 100%;
