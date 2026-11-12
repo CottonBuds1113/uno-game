@@ -156,19 +156,62 @@ socket.on('gameState', (data) => {
     playerList.innerHTML = '';
     data.players.forEach(p => {
         const li = document.createElement('li');
-        const isMe = p.id === myId ? ' (あなた)' : '';
-        const unoStatus = p.hasCalledUno ? ' 「🔥UNO!」' : '';
-        li.innerText = `${p.name}${isMe}：手札 ${p.handCount}枚${unoStatus}`;
-        
+        li.className = 'player-card';
         if (p.id === data.currentTurnId) {
             li.classList.add('current-turn-player');
-            li.innerText += ' 👈 [ターン]';
         }
 
+        // 1. 名前とバッジのヘッダー
+        const header = document.createElement('div');
+        header.className = 'player-card-header';
+
+        const isMe = p.id === myId ? ' (あなた)' : '';
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = `${p.name}${isMe}`;
+        header.appendChild(nameSpan);
+
+        if (p.id === data.currentTurnId) {
+            const turnBadge = document.createElement('span');
+            turnBadge.className = 'turn-badge';
+            turnBadge.innerText = 'TURN';
+            header.appendChild(turnBadge);
+        }
+
+        if (p.hasCalledUno) {
+            const unoBadge = document.createElement('span');
+            unoBadge.className = 'uno-status-badge';
+            unoBadge.innerText = 'UNO!';
+            header.appendChild(unoBadge);
+        }
+
+        li.appendChild(header);
+
+        // 2. 裏向きミニカードの重なり＆枚数表示
+        const miniHandDiv = document.createElement('div');
+        miniHandDiv.className = 'mini-hand-container';
+
+        // 見た目が広がりすぎないよう最大10枚まで描画
+        const displayCardCount = Math.min(p.handCount, 10);
+        for (let i = 0; i < displayCardCount; i++) {
+            const miniCard = document.createElement('div');
+            miniCard.className = 'mini-card-back';
+            miniHandDiv.appendChild(miniCard);
+        }
+
+        const countLabel = document.createElement('span');
+        countLabel.className = 'hand-count-label';
+        countLabel.innerText = `${p.handCount}枚`;
+        miniHandDiv.appendChild(countLabel);
+
+        li.appendChild(miniHandDiv);
+
+        // 3. UNO言い忘れ指摘ボタン
         if (p.id !== myId && p.handCount === 1 && !p.hasCalledUno) {
             const reportBtn = document.createElement('button');
             reportBtn.className = 'callout-penalty-btn';
-            reportBtn.innerText = 'UNO言い忘れ指摘！';
+            reportBtn.style.marginLeft = '0';
+            reportBtn.style.marginTop = '4px';
+            reportBtn.innerText = '⚠️ UNO言い忘れ指摘！';
             reportBtn.onclick = () => {
                 socket.emit('reportUnoFailure', { roomId: currentRoomId, targetPlayerId: p.id });
             };

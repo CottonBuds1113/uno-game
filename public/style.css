@@ -294,36 +294,122 @@ button:disabled {
     transform: scale(1.1);
 }
 
+/* ====================================
+   一新したプレイヤー一覧（ボード形式）
+==================================== */
 #player-list-area {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 10px 15px;
-    border-radius: 8px;
     margin: 15px auto;
-    text-align: left;
-    display: inline-block;
-    min-width: 250px;
+    width: 100%;
 }
 
 #player-list-area h4 {
-    margin: 0 0 8px 0;
-    text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding-bottom: 4px;
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 1px;
 }
 
 #player-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    list-style: none;
+    padding: 0;
     margin: 0;
-    padding-left: 20px;
 }
 
-#player-list li {
-    margin-bottom: 4px;
-    font-size: 15px;
+.player-card {
+    background: rgba(0, 0, 0, 0.45);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
 }
 
-.current-turn-player {
-    color: #2ecc71;
+/* 現在ターンのプレイヤーを強調 */
+.player-card.current-turn-player {
+    border-color: #2ecc71;
+    background: rgba(46, 204, 113, 0.18);
+    box-shadow: 0 0 14px rgba(46, 204, 113, 0.5);
+    transform: translateY(-2px);
+}
+
+.player-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-weight: bold;
+    font-size: 14px;
+}
+
+.turn-badge {
+    background-color: #2ecc71;
+    color: #000;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.uno-status-badge {
+    background: linear-gradient(135deg, #e74c3c, #f1c40f);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 裏向きミニカードの重なりエリア */
+.mini-hand-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    margin-top: 2px;
+}
+
+.mini-card-back {
+    width: 22px;
+    height: 32px;
+    background-color: #1a1a1a;
+    border: 1.5px solid #ffffff;
+    border-radius: 4px;
+    position: relative;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.5);
+    margin-left: -10px; /* カードを重ねる */
+}
+
+.mini-card-back:first-child {
+    margin-left: 0;
+}
+
+/* 裏向きカード中央の赤い楕円 */
+.mini-card-back::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 22px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(-20deg);
+}
+
+.hand-count-label {
+    margin-left: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #ecf0f1;
 }
 
 /* UNO宣言ボタン */
