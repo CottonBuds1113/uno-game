@@ -33,6 +33,21 @@ let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
 let isMeSpectator = false;
 
+// ====================================
+// ローディング制御関数
+// ====================================
+function showLoading(text = 'Loading...') {
+    const overlay = document.getElementById('loading-overlay');
+    const textEl = overlay ? overlay.querySelector('.loading-text') : null;
+    if (textEl) textEl.innerText = text;
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
 socket.on('connect', () => {
     myId = socket.id;
 });
@@ -65,10 +80,17 @@ function joinRoom() {
     const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
 
     currentRoomId = roomId;
+    
+    // ▼ 参加ボタンを押した瞬間にローディングを表示
+    showLoading('卓を囲んでいます...');
+    
     socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard, allowSpectator });
 }
 
 socket.on('joinedRoom', (roomId) => {
+    // ▼ 部屋に入れたらローディングを解除
+    hideLoading();
+    
     lobbyScreen.style.display = 'none';
     gameScreen.style.display = 'block';
     currentRoomDisplay.innerText = `ルーム ID: ${roomId}`;
@@ -145,7 +167,6 @@ socket.on('gameState', (data) => {
     }
     latestGameState = data;
 
-    // 自分が観戦者かどうかを判定
     if (data.spectators && data.spectators.some(s => s.id === myId)) {
         isMeSpectator = true;
     } else {
@@ -247,7 +268,6 @@ socket.on('gameState', (data) => {
         playerList.appendChild(li);
     });
 
-    // 観戦者リストの表示
     if (data.spectators && data.spectators.length > 0) {
         const specLi = document.createElement('li');
         specLi.style.width = '100%';

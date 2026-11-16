@@ -10,6 +10,13 @@
 
     <!-- ▼ スポットライト演出用のオーバーレイ -->
     <div id="lobby-spotlight"></div>
+
+    <!-- ▼ 汎用ローディング画面（接続中・参加処理中） -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading...</p>
+    </div>
+
     <!-- ロビー画面 -->
     <div id="lobby-screen">
         <h2>UNO</h2>
@@ -26,7 +33,7 @@
                 <span class="toggle-label">ドロー累積（+2/+4重ね）ルール</span>
             </div>
 
-            <!-- ▼ 手札交換カード（スワップ）ルールのスイッチを追加 -->
+            <!-- 手札交換カード（スワップ）ルールのスイッチ -->
             <div class="toggle-container">
                 <label class="toggle-switch">
                     <input type="checkbox" id="swap-rule-checkbox" checked>
@@ -35,7 +42,7 @@
                 <span class="toggle-label">手札交換カード（スワップ）を含める</span>
             </div>
 
-            <!-- ▼ 観戦モードのスイッチを追加 -->
+            <!-- 観戦モードのスイッチ -->
             <div class="toggle-container">
                 <label class="toggle-switch">
                     <input type="checkbox" id="spectator-rule-checkbox" checked>
@@ -88,7 +95,7 @@
         </div>
     </div>
 
-    <!-- ▼ 手札交換の相手を選ぶモーダル -->
+    <!-- 手札交換の相手を選ぶモーダル -->
     <div id="swap-player-modal">
         <div class="color-picker-content">
             <p>手札を交換する相手を選んでください</p>
