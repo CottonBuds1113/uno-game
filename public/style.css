@@ -17,7 +17,6 @@ body {
     background-size: cover;         
     background-position: center;    
     background-repeat: no-repeat;   
-    
     background-attachment: scroll;
     
     padding: 30px;
@@ -26,9 +25,8 @@ body {
     display: inline-block;
     max-width: 600px;
     width: 90%;
-    margin-top: 300px;
+    margin-top: 200px;
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
-    /* ▼ 跳ね返りなしの極端なイーズアウトで、ピタッと硬く止める */
     animation: simpleDeskSlide 0.85s cubic-bezier(0.05, 0.9, 0.1, 1) forwards;
     touch-action: manipulation;
     overflow: hidden;
@@ -75,18 +73,17 @@ body {
     color: white;
     box-shadow: inset 4px 4px 8px #150a03, 
                 inset -4px -4px 8px #150a03;
-    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); /* なめらかに変化させる */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* 普段のうっすらした枠線 */
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* クリックして入力状態（フォーカス）になったとき */
 #player-name-input:focus, #room-id-input:focus {
     outline: none;
-    border-color: #2ecc71; /* 綺麗なグリーンに光らせる */
+    border-color: #2ecc71;
     box-shadow: inset 4px 4px 8px #150a03, 
                 inset -4px -4px 8px #150a03, 
-                0 0 12px rgba(46, 204, 113, 0.4); /* 外側にふんわりとした光の演出 */
-    transform: scale(1.02); /* ほんの少しだけふんわり手前に浮き出る */
+                0 0 12px rgba(46, 204, 113, 0.4);
+    transform: scale(1.02);
 }
 
 .button-group {
@@ -95,7 +92,7 @@ body {
     justify-content: center;
 }
 
-.button-group button, #draw-btn {
+.button-group button, #draw-btn, .primary-btn {
     background-color: #00000050;
     color: white;
     border: none;
@@ -107,13 +104,13 @@ body {
     transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
 }
 
-.button-group button:hover, #draw-btn:hover {
+.button-group button:hover, #draw-btn:hover, .primary-btn:hover {
     background-color: #ffffff;
     color: #000000;
     transform: scale(1.05);
 }
 
-.button-group button:active, #draw-btn:active {
+.button-group button:active, #draw-btn:active, .primary-btn:active {
     transform: scale(0.96);
 }
 
@@ -164,9 +161,6 @@ button:disabled {
     padding: 10px;
 }
 
-/* ====================================
-   UNO風 カード本体のデザイン
-==================================== */
 .card {
     position: relative;
     width: 75px;
@@ -283,7 +277,7 @@ button:disabled {
     100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-#color-picker-modal {
+#color-picker-modal, #swap-player-modal {
     display: none;
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -315,9 +309,6 @@ button:disabled {
     transform: scale(1.1);
 }
 
-/* ====================================
-   一新したプレイヤー一覧（ボード形式）
-==================================== */
 #player-list-area {
     margin: 15px auto;
     width: 100%;
@@ -354,7 +345,6 @@ button:disabled {
     position: relative;
 }
 
-/* 現在ターンのプレイヤーを強調 */
 .player-card.current-turn-player {
     border-color: #2ecc71;
     background: rgba(46, 204, 113, 0.18);
@@ -389,7 +379,6 @@ button:disabled {
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
-/* 裏向きミニカードの重なりエリア */
 .mini-hand-container {
     display: flex;
     align-items: center;
@@ -406,14 +395,13 @@ button:disabled {
     border-radius: 4px;
     position: relative;
     box-shadow: -2px 0 4px rgba(0,0,0,0.5);
-    margin-left: -10px; /* カードを重ねる */
+    margin-left: -10px;
 }
 
 .mini-card-back:first-child {
     margin-left: 0;
 }
 
-/* 裏向きカード中央の赤い楕円 */
 .mini-card-back::before {
     content: '';
     position: absolute;
@@ -433,7 +421,6 @@ button:disabled {
     color: #ecf0f1;
 }
 
-/* UNO宣言ボタン */
 .uno-call-btn {
     background: linear-gradient(135deg, #e74c3c, #f1c40f) !important;
     color: white !important;
@@ -464,7 +451,6 @@ button:disabled {
     transform: scale(1) !important;
 }
 
-/* UNO言い忘れ時の指摘ボタン */
 .callout-penalty-btn {
     background-color: #e74c3c;
     color: white;
@@ -480,9 +466,6 @@ button:disabled {
     background-color: #c0392b;
 }
 
-/* ====================================
-   UNO宣言時の暗転＆流れるテロップ演出
-==================================== */
 #uno-overlay {
     display: none;
     position: fixed;
@@ -490,8 +473,8 @@ button:disabled {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.65); /* 背景を少し暗くする */
-    pointer-events: none; /* 操作を邪魔しない */
+    background-color: rgba(0, 0, 0, 0.65);
+    pointer-events: none;
     z-index: 3000;
     overflow: hidden;
     align-items: center;
@@ -518,7 +501,6 @@ button:disabled {
     animation: slideAcrossWithPause 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* 左画面外から中央でゆったり減速し、右画面外へ抜ける緩急アニメーション */
 @keyframes slideAcrossWithPause {
     0% {
         left: -10%;
@@ -542,9 +524,6 @@ button:disabled {
     }
 }
 
-/* ====================================
-   スマホ・小画面向けのレスポンシブ調整
-==================================== */
 @media screen and (max-width: 768px) {
     body {
         padding: 10px;
@@ -585,13 +564,10 @@ button:disabled {
     }
 
     .uno-scrolling-text {
-        font-size: 22px; /* スマホ幅でもはみ出しすぎないサイズに調整 */
+        font-size: 22px;
     }
 }
 
-/* ====================================
-   おしゃれなトグルスイッチ＆アニメーション
-==================================== */
 .toggle-container {
     display: flex;
     align-items: center;
@@ -608,7 +584,6 @@ button:disabled {
     font-weight: 500;
 }
 
-/* スイッチ全体の箱 */
 .toggle-switch {
     position: relative;
     display: inline-block;
@@ -616,26 +591,23 @@ button:disabled {
     height: 26px;
 }
 
-/* 本体のチェックボックスは非表示にする */
 .toggle-switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-/* スライドする背景部分 */
 .toggle-slider {
     position: absolute;
     cursor: pointer;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #3e2723; /* オフのときの暗い茶色系 */
+    background-color: #3e2723;
     border: 2px solid rgba(255, 255, 255, 0.4);
     transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 26px;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
 }
 
-/* 中を動く丸いツマミ */
 .toggle-slider:before {
     position: absolute;
     content: "";
@@ -644,28 +616,25 @@ button:disabled {
     left: 2px;
     bottom: 2px;
     background-color: white;
-    transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* ちょっとポヨンと弾むようなイージング */
+    transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-/* チェックが入った（ON）ときの色と動き */
 .toggle-switch input:checked + .toggle-slider {
-    background-color: #2ecc71; /* 鮮やかなグリーン */
+    background-color: #2ecc71;
     border-color: #ffffff;
     box-shadow: 0 0 10px rgba(46, 204, 113, 0.5), inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
-    transform: translateX(22px); /* 右へスライド */
+    transform: translateX(22px);
 }
 
-/* ホバーしたときのふんわり感 */
 .toggle-switch:hover .toggle-slider {
     border-color: #ffffff;
 }
 
-/* 画面やカードが更新されたときのなめらかなフェード */
 .fade-update {
     animation: infoFadeIn 0.3s cubic-bezier(0.05, 0.9, 0.1, 1);
 }
@@ -673,7 +642,7 @@ button:disabled {
 @keyframes infoFadeIn {
     0% {
         opacity: 0.2;
-        transform: translateY(3px); /* わずかに下からスッと浮き上がる */
+        transform: translateY(3px);
     }
     100% {
         opacity: 1;
@@ -681,13 +650,10 @@ button:disabled {
     }
 }
 
-/* ====================================
-   リザルト画面（勝利演出）のスタイル
-==================================== */
 .result-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.75); /* 画面全体を重厚に暗くする */
+    background-color: rgba(0, 0, 0, 0.75);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -697,15 +663,13 @@ button:disabled {
     transition: opacity 0.4s ease;
 }
 
-/* 表示状態になったとき */
 .result-overlay.show {
     opacity: 1;
     pointer-events: auto;
 }
 
-/* ポップアップするカード本体 */
 .result-card {
-    background: #21170a; /* ダークウッド調の背景 */
+    background: #21170a;
     background-image: url('brown-bg.jpg');
     background-size: cover;
     border: 2px solid rgba(255, 255, 255, 0.8);
@@ -719,7 +683,7 @@ button:disabled {
 }
 
 .result-overlay.show .result-card {
-    transform: scale(1) translateY(0); /* スッと定位置に収まるアニメーション */
+    transform: scale(1) translateY(0);
 }
 
 .result-trophy {
@@ -737,7 +701,7 @@ button:disabled {
     font-size: 26px;
     margin: 0 0 10px 0;
     letter-spacing: 2px;
-    color: #f1c40f; /* ゴールドカラー */
+    color: #f1c40f;
 }
 
 #winner-text {
@@ -746,7 +710,6 @@ button:disabled {
     color: #ecf0f1;
 }
 
-/* もう一度遊ぶボタン */
 #restart-btn {
     background-color: #2ecc71;
     color: white;

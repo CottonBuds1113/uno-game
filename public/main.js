@@ -15,6 +15,8 @@ const handDiv = document.getElementById('hand');
 const drawBtn = document.getElementById('draw-btn');
 const unoBtn = document.getElementById('uno-btn');
 const colorPickerModal = document.getElementById('color-picker-modal');
+const swapPlayerModal = document.getElementById('swap-player-modal');
+const swapPlayerButtons = document.getElementById('swap-player-buttons');
 
 const unoOverlay = document.getElementById('uno-overlay');
 const unoScrollingText = document.getElementById('uno-scrolling-text');
@@ -26,6 +28,8 @@ let latestGameState = null;
 let myCurrentHand = [];
 let previousHandLength = 0;
 let pendingWildCardIndex = null;
+let pendingSwapCardIndex = null;
+let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
 
 socket.on('connect', () => {
@@ -51,11 +55,14 @@ function joinRoom() {
         return;
     }
 
-    const checkbox = document.getElementById('stack-rule-checkbox');
-    const isStackEnabled = checkbox ? checkbox.checked : true;
+    const stackCheckbox = document.getElementById('stack-rule-checkbox');
+    const swapCheckbox = document.getElementById('swap-rule-checkbox');
+    
+    const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
+    const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
 
     currentRoomId = roomId;
-    socket.emit('joinRoom', { roomId, name, isStackEnabled });
+    socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard });
 }
 
 socket.on('joinedRoom', (roomId) => {
@@ -70,16 +77,14 @@ socket.on('unoDeclared', ({ playerId, playerName }) => {
         clearTimeout(unoAnimationTimeout);
     }
 
-    // ▼ 【修正】自分が宣言した本人なら「UNO！」、他の人なら「〇〇がUNOを宣言した」と正しく出し分ける
     if (playerId === myId) {
         unoScrollingText.innerText = 'UNO！';
     } else {
         unoScrollingText.innerText = `${playerName}がUNOを宣言した`;
     }
 
-    // アニメーションを最初から再生させるためのリセット処理
     unoOverlay.style.display = 'none';
-    void unoOverlay.offsetWidth; // リフローを強制
+    void unoOverlay.offsetWidth;
     unoOverlay.style.display = 'flex';
 
     unoAnimationTimeout = setTimeout(() => {
@@ -95,12 +100,13 @@ function getCardLabel(card) {
     if (card.value === 'draw2') return '+2';
     if (card.value === 'wild') return '🌈';
     if (card.value === 'wild_draw4') return '+4';
+    if (card.value === 'swap') return '⇄'; // スワップカードの表示
     return card.value;
 }
 
 function createCardElement(card) {
     const cardDiv = document.createElement('div');
-    const colorClass = card.value === 'wild_draw4' ? 'wild' : card.color;
+    const colorClass = (card.value === 'wild_draw4' || card.value === 'swap') ? 'wild' : card.color;
     cardDiv.className = `card ${colorClass}`;
 
     const label = getCardLabel(card);
@@ -113,8 +119,8 @@ function createCardElement(card) {
     center.className = 'card-center';
     center.innerText = label;
 
-    if (card.value === 'wild_draw4') {
-        center.style.fontSize = '28px';
+    if (card.value === 'wild_draw4' || card.value === 'swap') {
+        center.style.fontSize = card.value === 'swap' ? '32px' : '28px';
     }
 
     const cornerBottom = document.createElement('div');
@@ -132,7 +138,7 @@ socket.on('gameState', (data) => {
     const gameInfo = document.getElementById('game-info');
     if (gameInfo) {
         gameInfo.classList.remove('fade-update');
-        void gameInfo.offsetWidth; // ブラウザに再描画を強制させるテクニック
+        void gameInfo.offsetWidth;
         gameInfo.classList.add('fade-update');
     }
     latestGameState = data;
@@ -168,7 +174,6 @@ socket.on('gameState', (data) => {
             li.classList.add('current-turn-player');
         }
 
-        // 1. 名前とバッジのヘッダー
         const header = document.createElement('div');
         header.className = 'player-card-header';
 
@@ -193,11 +198,9 @@ socket.on('gameState', (data) => {
 
         li.appendChild(header);
 
-        // 2. 裏向きミニカードの重なり＆枚数表示
         const miniHandDiv = document.createElement('div');
         miniHandDiv.className = 'mini-hand-container';
 
-        // 見た目が広がりすぎないよう最大10枚まで描画
         const displayCardCount = Math.min(p.handCount, 10);
         for (let i = 0; i < displayCardCount; i++) {
             const miniCard = document.createElement('div');
@@ -212,7 +215,6 @@ socket.on('gameState', (data) => {
 
         li.appendChild(miniHandDiv);
 
-        // 3. UNO言い忘れ指摘ボタン
         if (p.id !== myId && p.handCount === 1 && !p.hasCalledUno) {
             const reportBtn = document.createElement('button');
             reportBtn.className = 'callout-penalty-btn';
@@ -231,7 +233,7 @@ socket.on('gameState', (data) => {
     if (data.topCard) {
         const topCardElement = document.getElementById('top-card');
         if (topCardElement) {
-            const topColorClass = data.topCard.value === 'wild_draw4' ? 'wild' : data.topCard.color;
+            const topColorClass = (data.topCard.value === 'wild_draw4' || data.topCard.value === 'swap') ? 'wild' : data.topCard.color;
             topCardElement.className = `card ${topColorClass} play-impact`;
 
             const label = getCardLabel(data.topCard);
@@ -415,7 +417,11 @@ unoBtn.onclick = () => {
 };
 
 function playSelectedCard(card, index) {
-    if (card.color === 'wild') {
+    if (card.value === 'swap') {
+        // スワップカードの場合、まず交換相手を選択させる
+        pendingSwapCardIndex = index;
+        openSwapPlayerModal();
+    } else if (card.color === 'wild') {
         pendingWildCardIndex = index;
         colorPickerModal.style.display = 'flex';
     } else {
@@ -423,10 +429,53 @@ function playSelectedCard(card, index) {
     }
 }
 
+// 交換相手選択モーダルを開く処理
+function openSwapPlayerModal() {
+    swapPlayerButtons.innerHTML = '';
+    if (!latestGameState || !latestGameState.players) return;
+
+    latestGameState.players.forEach(p => {
+        if (p.id !== myId) {
+            const btn = document.createElement('button');
+            btn.className = 'primary-btn';
+            btn.style.padding = '10px 20px';
+            btn.style.fontSize = '15px';
+            btn.style.backgroundColor = '#3498db';
+            btn.innerText = `${p.name} (手札: ${p.handCount}枚)`;
+            btn.onclick = () => {
+                selectedSwapTargetId = p.id;
+                swapPlayerModal.style.display = 'none';
+                // 相手を選んだら、次にワイルドと同様に色選択モーダルを開く
+                pendingWildCardIndex = pendingSwapCardIndex;
+                colorPickerModal.style.display = 'flex';
+            };
+            swapPlayerButtons.appendChild(btn);
+        }
+    });
+
+    swapPlayerModal.style.display = 'flex';
+}
+
 window.selectWildColor = function(color) {
     colorPickerModal.style.display = 'none';
-    if (pendingWildCardIndex !== null) {
-        socket.emit('playCard', { roomId: currentRoomId, cardIndex: pendingWildCardIndex, chosenColor: color });
+    
+    if (pendingSwapCardIndex !== null) {
+        // スワップカードの場合
+        socket.emit('playCard', { 
+            roomId: currentRoomId, 
+            cardIndex: pendingSwapCardIndex, 
+            chosenColor: color, 
+            targetPlayerId: selectedSwapTargetId 
+        });
+        pendingSwapCardIndex = null;
+        selectedSwapTargetId = null;
+    } else if (pendingWildCardIndex !== null) {
+        // 通常のワイルドカードの場合
+        socket.emit('playCard', { 
+            roomId: currentRoomId, 
+            cardIndex: pendingWildCardIndex, 
+            chosenColor: color 
+        });
         pendingWildCardIndex = null;
     }
 };
@@ -440,17 +489,14 @@ socket.on('gameOver', (message) => {
     const winnerText = document.getElementById('winner-text');
     
     if (resultModal && winnerText) {
-        winnerText.textContent = message; // サーバーから送られてきた勝者メッセージを表示
-        resultModal.classList.remove('hidden')
-        resultModal.classList.add('show'); // 演出発動！
+        winnerText.textContent = message;
+        resultModal.classList.add('show');
     } else {
-        // 万が一モーダル要素が見つからないときの保険
         alert(message);
         location.reload();
     }
 });
 
-// 「もう一度遊ぶ」ボタンを押したらリロードする
 const restartBtn = document.getElementById('restart-btn');
 if (restartBtn) {
     restartBtn.addEventListener('click', () => {

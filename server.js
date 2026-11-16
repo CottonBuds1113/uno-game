@@ -8,7 +8,7 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
-function createDeck() {
+function createDeck(allowSwapCard = true) {
     const colors = ['red', 'blue', 'green', 'yellow'];
     const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     let deck = [];
@@ -35,14 +35,21 @@ function createDeck() {
         deck.push({ color: 'wild', type: 'wild_draw4', value: 'wild_draw4', id: `wild_draw4-${Math.random()}` });
     }
 
+    // ▼ 手札交換カード（スワップ）が有効な場合、デッキに4枚追加
+    if (allowSwapCard) {
+        for (let i = 0; i < 4; i++) {
+            deck.push({ color: 'wild', type: 'swap', value: 'swap', id: `swap-${Math.random()}` });
+        }
+    }
+
     return deck.sort(() => Math.random() - 0.5);
 }
 
 const rooms = {};
 
-function getOrCreateRoom(roomId, isStackEnabled = true) {
+function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true) {
     if (!rooms[roomId]) {
-        const deck = createDeck();
+        const deck = createDeck(allowSwapCard);
         let topCard = deck.pop();
         while (topCard.type !== 'number') {
             deck.unshift(topCard);
@@ -56,7 +63,8 @@ function getOrCreateRoom(roomId, isStackEnabled = true) {
             turn: 0,
             direction: 1,
             pendingDrawCount: 0,
-            isStackEnabled: isStackEnabled
+            isStackEnabled: isStackEnabled,
+            allowSwapCard: allowSwapCard
         };
     }
     return rooms[roomId];
@@ -92,14 +100,14 @@ function updateGameState(roomId) {
 io.on('connection', (socket) => {
     let playerRoomId = null;
 
-    socket.on('joinRoom', ({ roomId, name, isStackEnabled }) => {
+    socket.on('joinRoom', ({ roomId, name, isStackEnabled, allowSwapCard }) => {
         playerRoomId = roomId;
         socket.join(roomId);
 
-        const room = getOrCreateRoom(roomId, isStackEnabled);
+        const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard);
 
         if (room.deck.length < 7) {
-            room.deck = createDeck();
+            room.deck = createDeck(room.allowSwapCard);
         }
 
         const playerHand = room.deck.splice(0, 7);
@@ -121,7 +129,6 @@ io.on('connection', (socket) => {
         const player = room.players.find(p => p.id === socket.id);
         if (player && player.hand.length === 1 && !player.hasCalledUno) {
             player.hasCalledUno = true;
-            // テロップ演出用イベントをルーム全員に送信
             io.to(roomId).emit('unoDeclared', {
                 playerId: player.id,
                 playerName: player.name
@@ -137,7 +144,7 @@ io.on('connection', (socket) => {
         
         if (targetPlayer && targetPlayer.hand.length === 1 && !targetPlayer.hasCalledUno) {
             for (let i = 0; i < 2; i++) {
-                if (room.deck.length === 0) room.deck = createDeck();
+                if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
                 targetPlayer.hand.push(room.deck.pop());
             }
             targetPlayer.hasCalledUno = false;
@@ -146,7 +153,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('playCard', ({ roomId, cardIndex, chosenColor }) => {
+    socket.on('playCard', ({ roomId, cardIndex, chosenColor, targetPlayerId }) => {
         const room = rooms[roomId];
         if (!room || room.players.length === 0) return;
         if (room.players[room.turn].id !== socket.id) return;
@@ -185,6 +192,17 @@ io.on('connection', (socket) => {
                 playedCard.designatedColor = chosenColor || 'red';
             }
 
+            // ▼ スワップカードが使われた場合の手札入れ替え処理
+            if (playedCard.value === 'swap' && targetPlayerId) {
+                const targetPlayer = room.players.find(p => p.id === targetPlayerId);
+                if (targetPlayer) {
+                    const tempHand = player.hand;
+                    player.hand = targetPlayer.hand;
+                    targetPlayer.hand = tempHand;
+                    io.to(roomId).emit('announce', `🔄 ${player.name} が ${targetPlayer.name} と手札を交換しました！`);
+                }
+            }
+
             room.discardPile.push(playedCard);
 
             if (player.hand.length > 1) {
@@ -211,7 +229,7 @@ io.on('connection', (socket) => {
                         const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
                         const nextPlayer = room.players[nextTurnIndex];
                         for (let i = 0; i < 2; i++) {
-                            if (room.deck.length === 0) room.deck = createDeck();
+                            if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
                             nextPlayer.hand.push(room.deck.pop());
                         }
                         nextPlayer.hasCalledUno = false;
@@ -224,7 +242,7 @@ io.on('connection', (socket) => {
                         const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
                         const nextPlayer = room.players[nextTurnIndex];
                         for (let i = 0; i < 4; i++) {
-                            if (room.deck.length === 0) room.deck = createDeck();
+                            if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
                             nextPlayer.hand.push(room.deck.pop());
                         }
                         nextPlayer.hasCalledUno = false;
@@ -249,13 +267,13 @@ io.on('connection', (socket) => {
 
         if (room.isStackEnabled && room.pendingDrawCount > 0) {
             for (let i = 0; i < room.pendingDrawCount; i++) {
-                if (room.deck.length === 0) room.deck = createDeck();
+                if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
                 player.hand.push(room.deck.pop());
             }
             io.to(roomId).emit('announce', `💥 ${player.name} は累積ペナルティで ${room.pendingDrawCount}枚 引かされました！`);
             room.pendingDrawCount = 0;
         } else {
-            if (room.deck.length === 0) room.deck = createDeck();
+            if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
             player.hand.push(room.deck.pop());
             player.hasCalledUno = false;
         }

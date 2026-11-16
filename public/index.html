@@ -9,27 +9,36 @@
 <body>
 
     <!-- ロビー画面 -->
-        <div id="lobby-screen">
-            <h2>UNO</h2>
-            <div class="lobby-form">
-                <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
-                <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
-                
-                <!-- ▼ おしゃれなトグルスイッチ構造に変更 -->
-                <div class="toggle-container">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="stack-rule-checkbox" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">ドロー累積（+2/+4重ね）ルール</span>
-                </div>
+    <div id="lobby-screen">
+        <h2>UNO</h2>
+        <div class="lobby-form">
+            <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
+            <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
+            
+            <!-- ドロー累積スイッチ -->
+            <div class="toggle-container">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="stack-rule-checkbox" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">ドロー累積（+2/+4重ね）ルール</span>
+            </div>
 
-                <div class="button-group">
-                    <button id="create-room-btn">部屋を作る</button>
-                    <button id="join-room-btn">部屋に参加</button>
-                </div>
+            <!-- ▼ 手札交換カード（スワップ）ルールのスイッチを追加 -->
+            <div class="toggle-container">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="swap-rule-checkbox" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">手札交換カード（スワップ）を含める</span>
+            </div>
+
+            <div class="button-group">
+                <button id="create-room-btn">部屋を作る</button>
+                <button id="join-room-btn">部屋に参加</button>
             </div>
         </div>
+    </div>
 
     <!-- ゲーム画面 -->
     <div id="game-screen" style="display: none;">
@@ -68,6 +77,14 @@
         </div>
     </div>
 
+    <!-- ▼ 手札交換の相手を選ぶモーダル -->
+    <div id="swap-player-modal">
+        <div class="color-picker-content">
+            <p>手札を交換する相手を選んでください</p>
+            <div id="swap-player-buttons" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;"></div>
+        </div>
+    </div>
+
     <!-- UNO宣言時の暗転＆流れるテロップ演出 -->
     <div id="uno-overlay">
         <div id="uno-scrolling-text" class="uno-scrolling-text"></div>
@@ -76,8 +93,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="main.js"></script>
 
-    <!-- ▼ 勝敗が決まったときに出るリザルト画面（初期は非表示） -->
-    <div id="result-modal" class="result-overlay hidden">
+    <!-- 勝敗が決まったときに出るリザルト画面 -->
+    <div id="result-modal" class="result-overlay">
         <div class="result-card">
             <div class="result-trophy">🏆</div>
             <h2>GAME OVER</h2>
