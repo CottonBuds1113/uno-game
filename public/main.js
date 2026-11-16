@@ -31,6 +31,7 @@ let pendingWildCardIndex = null;
 let pendingSwapCardIndex = null;
 let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
+let isMeSpectator = false;
 
 socket.on('connect', () => {
     myId = socket.id;
@@ -57,12 +58,14 @@ function joinRoom() {
 
     const stackCheckbox = document.getElementById('stack-rule-checkbox');
     const swapCheckbox = document.getElementById('swap-rule-checkbox');
+    const spectatorCheckbox = document.getElementById('spectator-rule-checkbox');
     
     const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
     const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
+    const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
 
     currentRoomId = roomId;
-    socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard });
+    socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard, allowSpectator });
 }
 
 socket.on('joinedRoom', (roomId) => {
@@ -71,7 +74,6 @@ socket.on('joinedRoom', (roomId) => {
     currentRoomDisplay.innerText = `ルーム ID: ${roomId}`;
 });
 
-// UNO宣言テロップアニメーションの再生
 socket.on('unoDeclared', ({ playerId, playerName }) => {
     if (unoAnimationTimeout) {
         clearTimeout(unoAnimationTimeout);
@@ -100,7 +102,7 @@ function getCardLabel(card) {
     if (card.value === 'draw2') return '+2';
     if (card.value === 'wild') return '🌈';
     if (card.value === 'wild_draw4') return '+4';
-    if (card.value === 'swap') return '⇄'; // スワップカードの表示
+    if (card.value === 'swap') return '⇄';
     return card.value;
 }
 
@@ -142,28 +144,43 @@ socket.on('gameState', (data) => {
         gameInfo.classList.add('fade-update');
     }
     latestGameState = data;
-    const isMyTurn = (data.currentTurnId === myId);
 
-    if (isMyTurn) {
-        if (data.pendingDrawCount > 0) {
-            turnInfo.innerText = `🔥 警告！+${data.pendingDrawCount} 累積中！カードを重ねるか、山札から ${data.pendingDrawCount}枚 引いてください`;
-            turnInfo.style.color = "#e74c3c";
-            drawBtn.innerText = `山札から ${data.pendingDrawCount}枚引く`;
-        } else {
-            turnInfo.innerText = "★ あなたの番です！出せるカードを場に出すか、山札から引いてください";
-            turnInfo.style.color = "#2ecc71";
-            drawBtn.innerText = "山札から引く";
-        }
-        drawBtn.disabled = false;
+    // 自分が観戦者かどうかを判定
+    if (data.spectators && data.spectators.some(s => s.id === myId)) {
+        isMeSpectator = true;
     } else {
-        if (data.pendingDrawCount > 0) {
-            turnInfo.innerText = `⚠️ 現在 +${data.pendingDrawCount} 累積中！次の人の運命やいかに…`;
+        isMeSpectator = false;
+    }
+
+    if (isMeSpectator) {
+        turnInfo.innerText = "👀 観戦モード中（試合を観戦しています）";
+        turnInfo.style.color = "#3498db";
+        drawBtn.style.display = 'none';
+    } else {
+        drawBtn.style.display = 'inline-block';
+        const isMyTurn = (data.currentTurnId === myId);
+
+        if (isMyTurn) {
+            if (data.pendingDrawCount > 0) {
+                turnInfo.innerText = `🔥 警告！+${data.pendingDrawCount} 累積中！カードを重ねるか、山札から ${data.pendingDrawCount}枚 引いてください`;
+                turnInfo.style.color = "#e74c3c";
+                drawBtn.innerText = `山札から ${data.pendingDrawCount}枚引く`;
+            } else {
+                turnInfo.innerText = "★ あなたの番です！出せるカードを場に出すか、山札から引いてください";
+                turnInfo.style.color = "#2ecc71";
+                drawBtn.innerText = "山札から引く";
+            }
+            drawBtn.disabled = false;
         } else {
-            turnInfo.innerText = "相手のターンを待っています...";
+            if (data.pendingDrawCount > 0) {
+                turnInfo.innerText = `⚠️ 現在 +${data.pendingDrawCount} 累積中！次の人の運命やいかに…`;
+            } else {
+                turnInfo.innerText = "相手のターンを待っています...";
+            }
+            turnInfo.style.color = "#ecf0f1";
+            drawBtn.innerText = "山札から引く";
+            drawBtn.disabled = true;
         }
-        turnInfo.style.color = "#ecf0f1";
-        drawBtn.innerText = "山札から引く";
-        drawBtn.disabled = true;
     }
 
     playerList.innerHTML = '';
@@ -215,7 +232,7 @@ socket.on('gameState', (data) => {
 
         li.appendChild(miniHandDiv);
 
-        if (p.id !== myId && p.handCount === 1 && !p.hasCalledUno) {
+        if (!isMeSpectator && p.id !== myId && p.handCount === 1 && !p.hasCalledUno) {
             const reportBtn = document.createElement('button');
             reportBtn.className = 'callout-penalty-btn';
             reportBtn.style.marginLeft = '0';
@@ -229,6 +246,17 @@ socket.on('gameState', (data) => {
 
         playerList.appendChild(li);
     });
+
+    // 観戦者リストの表示
+    if (data.spectators && data.spectators.length > 0) {
+        const specLi = document.createElement('li');
+        specLi.style.width = '100%';
+        specLi.style.color = '#bdc3c7';
+        specLi.style.fontSize = '13px';
+        specLi.style.marginTop = '5px';
+        specLi.innerText = `👀 観戦者: ${data.spectators.map(s => s.name).join(', ')}`;
+        playerList.appendChild(specLi);
+    }
 
     if (data.topCard) {
         const topCardElement = document.getElementById('top-card');
@@ -269,7 +297,7 @@ socket.on('gameState', (data) => {
 
 socket.on('yourHand', (hand) => {
     myCurrentHand = hand;
-    if (hand.length > 1) {
+    if (!isMeSpectator && hand.length > 1) {
         hasDeclaredUnoThisTurn = false;
         unoBtn.disabled = false;
         unoBtn.innerText = "🔥 UNO!";
@@ -284,6 +312,16 @@ socket.on('announce', (msg) => {
 
 function renderHand() {
     handDiv.innerHTML = '';
+    
+    if (isMeSpectator) {
+        unoBtn.style.display = 'none';
+        const msg = document.createElement('p');
+        msg.innerText = "※あなたは現在観戦中です（手札はありません）";
+        msg.style.color = "#bdc3c7";
+        handDiv.appendChild(msg);
+        return;
+    }
+
     if (!myCurrentHand) return;
 
     if (myCurrentHand.length === 1) {
@@ -418,7 +456,6 @@ unoBtn.onclick = () => {
 
 function playSelectedCard(card, index) {
     if (card.value === 'swap') {
-        // スワップカードの場合、まず交換相手を選択させる
         pendingSwapCardIndex = index;
         openSwapPlayerModal();
     } else if (card.color === 'wild') {
@@ -429,7 +466,6 @@ function playSelectedCard(card, index) {
     }
 }
 
-// 交換相手選択モーダルを開く処理
 function openSwapPlayerModal() {
     swapPlayerButtons.innerHTML = '';
     if (!latestGameState || !latestGameState.players) return;
@@ -445,7 +481,6 @@ function openSwapPlayerModal() {
             btn.onclick = () => {
                 selectedSwapTargetId = p.id;
                 swapPlayerModal.style.display = 'none';
-                // 相手を選んだら、次にワイルドと同様に色選択モーダルを開く
                 pendingWildCardIndex = pendingSwapCardIndex;
                 colorPickerModal.style.display = 'flex';
             };
@@ -460,7 +495,6 @@ window.selectWildColor = function(color) {
     colorPickerModal.style.display = 'none';
     
     if (pendingSwapCardIndex !== null) {
-        // スワップカードの場合
         socket.emit('playCard', { 
             roomId: currentRoomId, 
             cardIndex: pendingSwapCardIndex, 
@@ -470,7 +504,6 @@ window.selectWildColor = function(color) {
         pendingSwapCardIndex = null;
         selectedSwapTargetId = null;
     } else if (pendingWildCardIndex !== null) {
-        // 通常のワイルドカードの場合
         socket.emit('playCard', { 
             roomId: currentRoomId, 
             cardIndex: pendingWildCardIndex, 

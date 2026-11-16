@@ -35,7 +35,6 @@ function createDeck(allowSwapCard = true) {
         deck.push({ color: 'wild', type: 'wild_draw4', value: 'wild_draw4', id: `wild_draw4-${Math.random()}` });
     }
 
-    // ▼ 手札交換カード（スワップ）が有効な場合、デッキに4枚追加
     if (allowSwapCard) {
         for (let i = 0; i < 4; i++) {
             deck.push({ color: 'wild', type: 'swap', value: 'swap', id: `swap-${Math.random()}` });
@@ -47,7 +46,7 @@ function createDeck(allowSwapCard = true) {
 
 const rooms = {};
 
-function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true) {
+function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true, allowSpectator = true) {
     if (!rooms[roomId]) {
         const deck = createDeck(allowSwapCard);
         let topCard = deck.pop();
@@ -60,11 +59,13 @@ function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true) {
             deck: deck,
             discardPile: [topCard],
             players: [],
+            spectators: [],
             turn: 0,
             direction: 1,
             pendingDrawCount: 0,
             isStackEnabled: isStackEnabled,
-            allowSwapCard: allowSwapCard
+            allowSwapCard: allowSwapCard,
+            allowSpectator: allowSpectator
         };
     }
     return rooms[roomId];
@@ -87,6 +88,10 @@ function updateGameState(roomId) {
             handCount: p.hand.length,
             hasCalledUno: p.hasCalledUno 
         })),
+        spectators: room.spectators.map(s => ({
+            id: s.id,
+            name: s.name
+        })),
         topCard: room.discardPile[room.discardPile.length - 1],
         currentTurnId: room.players[room.turn] ? room.players[room.turn].id : null,
         pendingDrawCount: room.pendingDrawCount
@@ -95,16 +100,35 @@ function updateGameState(roomId) {
     room.players.forEach(p => {
         io.to(p.id).emit('yourHand', p.hand);
     });
+
+    room.spectators.forEach(s => {
+        io.to(s.id).emit('yourHand', []);
+    });
 }
 
 io.on('connection', (socket) => {
     let playerRoomId = null;
 
-    socket.on('joinRoom', ({ roomId, name, isStackEnabled, allowSwapCard }) => {
+    socket.on('joinRoom', ({ roomId, name, isStackEnabled, allowSwapCard, allowSpectator }) => {
         playerRoomId = roomId;
         socket.join(roomId);
 
-        const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard);
+        const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard, allowSpectator);
+        room.allowSpectator = allowSpectator;
+
+        // すでにゲームが始まっている場合は観戦者として参加
+        if (room.players.length > 0 && room.allowSpectator) {
+            const spectator = {
+                id: socket.id,
+                name: name || `Spectator ${room.spectators.length + 1}`,
+                isSpectator: true
+            };
+            room.spectators.push(spectator);
+
+            socket.emit('joinedRoom', roomId);
+            updateGameState(roomId);
+            return;
+        }
 
         if (room.deck.length < 7) {
             room.deck = createDeck(room.allowSwapCard);
@@ -115,7 +139,8 @@ io.on('connection', (socket) => {
             id: socket.id,
             name: name || `Player ${room.players.length + 1}`,
             hand: playerHand,
-            hasCalledUno: false
+            hasCalledUno: false,
+            isSpectator: false
         };
         room.players.push(player);
 
@@ -156,7 +181,7 @@ io.on('connection', (socket) => {
     socket.on('playCard', ({ roomId, cardIndex, chosenColor, targetPlayerId }) => {
         const room = rooms[roomId];
         if (!room || room.players.length === 0) return;
-        if (room.players[room.turn].id !== socket.id) return;
+        if (!room.players[room.turn] || room.players[room.turn].id !== socket.id) return;
 
         const player = room.players[room.turn];
         if (cardIndex < 0 || cardIndex >= player.hand.length) return;
@@ -192,7 +217,6 @@ io.on('connection', (socket) => {
                 playedCard.designatedColor = chosenColor || 'red';
             }
 
-            // ▼ スワップカードが使われた場合の手札入れ替え処理
             if (playedCard.value === 'swap' && targetPlayerId) {
                 const targetPlayer = room.players.find(p => p.id === targetPlayerId);
                 if (targetPlayer) {
@@ -261,7 +285,7 @@ io.on('connection', (socket) => {
     socket.on('drawCard', ({ roomId }) => {
         const room = rooms[roomId];
         if (!room || room.players.length === 0) return;
-        if (room.players[room.turn].id !== socket.id) return;
+        if (!room.players[room.turn] || room.players[room.turn].id !== socket.id) return;
 
         const player = room.players[room.turn];
 
@@ -285,14 +309,22 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (!playerRoomId || !rooms[playerRoomId]) return;
         const room = rooms[playerRoomId];
-        const index = room.players.findIndex(p => p.id === socket.id);
-        if (index !== -1) room.players.splice(index, 1);
+        
+        const playerIndex = room.players.findIndex(p => p.id === socket.id);
+        if (playerIndex !== -1) {
+            room.players.splice(playerIndex, 1);
+        } else {
+            const specIndex = room.spectators.findIndex(s => s.id === socket.id);
+            if (specIndex !== -1) room.spectators.splice(specIndex, 1);
+        }
 
-        if (room.players.length === 0) {
+        if (room.players.length === 0 && room.spectators.length === 0) {
             delete rooms[playerRoomId];
         } else {
-            if (room.turn >= room.players.length) room.turn = 0;
-            updateGameState(playerRoomId);
+            if (room.players.length > 0) {
+                if (room.turn >= room.players.length) room.turn = 0;
+                updateGameState(playerRoomId);
+            }
         }
     });
 });
