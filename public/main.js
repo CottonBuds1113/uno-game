@@ -129,6 +129,12 @@ function createCardElement(card) {
 }
 
 socket.on('gameState', (data) => {
+    const gameInfo = document.getElementById('game-info');
+    if (gameInfo) {
+        gameInfo.classList.remove('fade-update');
+        void gameInfo.offsetWidth; // ブラウザに再描画を強制させるテクニック
+        gameInfo.classList.add('fade-update');
+    }
     latestGameState = data;
     const isMyTurn = (data.currentTurnId === myId);
 

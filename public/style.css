@@ -658,3 +658,19 @@ button:disabled {
 .toggle-switch:hover .toggle-slider {
     border-color: #ffffff;
 }
+
+/* 画面やカードが更新されたときのなめらかなフェード */
+.fade-update {
+    animation: infoFadeIn 0.3s cubic-bezier(0.05, 0.9, 0.1, 1);
+}
+
+@keyframes infoFadeIn {
+    0% {
+        opacity: 0.2;
+        transform: translateY(3px); /* わずかに下からスッと浮き上がる */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
