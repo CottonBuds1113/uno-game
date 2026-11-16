@@ -128,7 +128,7 @@ button:disabled {
     background-size: cover;          
     background-position: center;     
     background-repeat: no-repeat;    
-    background-attachment: fixed;
+    background-attachment: scroll;
     padding: 20px;
     border-radius: 12px;
     border: hsla(0, 0%, 100%, 0.800) solid 2px;
