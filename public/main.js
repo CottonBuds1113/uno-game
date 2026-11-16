@@ -441,6 +441,7 @@ socket.on('gameOver', (message) => {
     
     if (resultModal && winnerText) {
         winnerText.textContent = message; // サーバーから送られてきた勝者メッセージを表示
+        resultModal.classList.remove('hidden')
         resultModal.classList.add('show'); // 演出発動！
     } else {
         // 万が一モーダル要素が見つからないときの保険
