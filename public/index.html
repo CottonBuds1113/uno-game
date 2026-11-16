@@ -75,5 +75,15 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="main.js"></script>
+
+    <!-- ▼ 勝敗が決まったときに出るリザルト画面（初期は非表示） -->
+    <div id="result-modal" class="result-overlay hidden">
+        <div class="result-card">
+            <div class="result-trophy">🏆</div>
+            <h2>GAME OVER</h2>
+            <p id="winner-text">勝者: プレイヤー名</p>
+            <button id="restart-btn" class="primary-btn">もう一度遊ぶ</button>
+        </div>
+    </div>
 </body>
 </html>

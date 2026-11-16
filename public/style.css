@@ -680,3 +680,87 @@ button:disabled {
         transform: translateY(0);
     }
 }
+
+/* ====================================
+   リザルト画面（勝利演出）のスタイル
+==================================== */
+.result-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.75); /* 画面全体を重厚に暗くする */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+
+/* 表示状態になったとき */
+.result-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ポップアップするカード本体 */
+.result-card {
+    background: #21170a; /* ダークウッド調の背景 */
+    background-image: url('brown-bg.jpg');
+    background-size: cover;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    padding: 35px 50px;
+    text-align: center;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
+    color: white;
+    transform: scale(0.8) translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.05, 0.9, 0.1, 1);
+}
+
+.result-overlay.show .result-card {
+    transform: scale(1) translateY(0); /* スッと定位置に収まるアニメーション */
+}
+
+.result-trophy {
+    font-size: 48px;
+    margin-bottom: 10px;
+    animation: trophyBounce 1.5s infinite ease-in-out;
+}
+
+@keyframes trophyBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.result-card h2 {
+    font-size: 26px;
+    margin: 0 0 10px 0;
+    letter-spacing: 2px;
+    color: #f1c40f; /* ゴールドカラー */
+}
+
+#winner-text {
+    font-size: 18px;
+    margin-bottom: 25px;
+    color: #ecf0f1;
+}
+
+/* もう一度遊ぶボタン */
+#restart-btn {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.4);
+    transition: all 0.2s ease;
+}
+
+#restart-btn:hover {
+    background-color: #27ae60;
+    transform: scale(1.05);
+}

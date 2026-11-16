@@ -436,6 +436,23 @@ drawBtn.onclick = () => {
 };
 
 socket.on('gameOver', (message) => {
-    alert(message);
-    location.reload();
+    const resultModal = document.getElementById('result-modal');
+    const winnerText = document.getElementById('winner-text');
+    
+    if (resultModal && winnerText) {
+        winnerText.textContent = message; // サーバーから送られてきた勝者メッセージを表示
+        resultModal.classList.add('show'); // 演出発動！
+    } else {
+        // 万が一モーダル要素が見つからないときの保険
+        alert(message);
+        location.reload();
+    }
 });
+
+// 「もう一度遊ぶ」ボタンを押したらリロードする
+const restartBtn = document.getElementById('restart-btn');
+if (restartBtn) {
+    restartBtn.addEventListener('click', () => {
+        location.reload();
+    });
+}
