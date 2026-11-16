@@ -49,45 +49,23 @@ body {
     }
 }
 
-/* ▼ ロビーの「UNO」ロゴに立体感とブルーム発光を付与 */
 #lobby-screen h2 {
     font-size: 80px;
     font-weight: 900;
-    letter-spacing: 4px;
+    letter-spacing: 6px;
     margin: 10px 10px 35px 10px;
-    color: #ffffff;
-    text-decoration: none;
+    color: #f8f9fa; /* わずかに温かみのある純白 */
+    text-decoration: underline;
     
+    /* ▼ 派手な発光をなくし、木の板に彫り込まれたような「深い立体感」と控えめな上品な白を表現 */
     text-shadow: 
-        0 3px 0 #800000,
-        0 6px 0 #500000,
-        0 8px 14px rgba(0, 0, 0, 0.9),
-        0 0 15px rgba(255, 230, 100, 0.9),
-        0 0 30px rgba(231, 76, 60, 0.8),
-        0 0 60px rgba(241, 196, 15, 0.6);
+        0 1px 0 rgba(255, 255, 255, 0.4),  /* 表面に当たるわずかなハイライト */
+        0 -2px 0 rgba(0, 0, 0, 0.8),       /* 上部の影（彫り込み感） */
+        0 4px 6px rgba(0, 0, 0, 0.9),      /* 足元に落ちる重厚なドロップ影 */
+        0 0 20px rgba(255, 255, 255, 0.15);/* 周りにほんのり広がる大人の落ち着いた空気感 */
 
-    animation: titleBloomPulse 2.5s ease-in-out infinite alternate;
-}
-
-@keyframes titleBloomPulse {
-    0% {
-        text-shadow: 
-            0 3px 0 #800000,
-            0 6px 0 #500000,
-            0 8px 14px rgba(0, 0, 0, 0.9),
-            0 0 12px rgba(255, 230, 100, 0.7),
-            0 0 25px rgba(231, 76, 60, 0.6),
-            0 0 50px rgba(241, 196, 15, 0.4);
-    }
-    100% {
-        text-shadow: 
-            0 3px 0 #800000,
-            0 6px 0 #500000,
-            0 8px 14px rgba(0, 0, 0, 0.9),
-            0 0 20px rgba(255, 240, 150, 1),
-            0 0 40px rgba(231, 76, 60, 0.9),
-            0 0 80px rgba(241, 196, 15, 0.8);
-    }
+    /* アニメーションを外し、静かに佇む高級感を演出 */
+    animation: none;
 }
 
 .lobby-form {
