@@ -17,29 +17,37 @@ body {
     background-size: cover;         
     background-position: center;    
     background-repeat: no-repeat;   
-    background-attachment: fixed;   
+    
+    background-attachment: scroll;
+    
     padding: 30px;
     border: hsla(0, 0%, 100%, 0.8) solid 2px;
     border-radius: 12px;
     display: inline-block;
-    max-width: 400px;
+    max-width: 600px;
     width: 90%;
-    margin-top: 50px;
+    margin-top: 300px;
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
-    /* ▼ scaleを使った滑らか＆軽量なアニメーションに変更 */
+    /* ▼ 跳ね返りなしの極端なイーズアウトで、ピタッと硬く止める */
     animation: simpleDeskSlide 0.85s cubic-bezier(0.05, 0.9, 0.1, 1) forwards;
     touch-action: manipulation;
     overflow: hidden;
+
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 @keyframes simpleDeskSlide {
     0% {
-        transform: translateY(-120vh) scale(0.8); /* 少し縮小＆上空からスタート */
+        transform: translateY(-120vh) scale(0.8);
         opacity: 0;
+        max-width: 240px;
     }
     100% {
-        transform: translateY(0) scale(1); /* 原寸大にピタッと着地 */
+        transform: translateY(0) scale(1);
         opacity: 1;
+        max-width: 600px;
     }
 }
 
