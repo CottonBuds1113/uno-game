@@ -50,7 +50,8 @@ body {
 }
 
 #lobby-screen h2 {
-    font-size: 50px;
+    font-size: 90px;
+    margin: 10px 10px 40px 10px;
     text-decoration: underline;
 }
 
