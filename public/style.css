@@ -421,6 +421,7 @@ button:disabled {
     color: #ecf0f1;
 }
 
+/* UNO宣言ボタン（ブルーム効果で強力に発光） */
 .uno-call-btn {
     background: linear-gradient(135deg, #e74c3c, #f1c40f) !important;
     color: white !important;
@@ -429,14 +430,43 @@ button:disabled {
     padding: 10px 24px !important;
     border-radius: 30px !important;
     border: 3px solid #ffffff !important;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.6);
     cursor: pointer;
-    animation: unoPulse 1s infinite alternate;
+    /* 多重シャドウによるブルーム（光のにじみ）効果 */
+    box-shadow: 
+        0 0 10px rgba(255, 230, 100, 0.9),
+        0 0 25px rgba(231, 76, 60, 0.8),
+        0 0 50px rgba(241, 196, 15, 0.6);
+    animation: unoBloomPulse 1.2s infinite alternate ease-in-out;
 }
 
-@keyframes unoPulse {
-    0% { transform: scale(1); box-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
-    100% { transform: scale(1.1); box-shadow: 0 0 22px rgba(241, 196, 15, 0.9); }
+@keyframes unoBloomPulse {
+    0% { 
+        transform: scale(1); 
+        box-shadow: 
+            0 0 8px rgba(255, 230, 100, 0.7),
+            0 0 20px rgba(231, 76, 60, 0.6),
+            0 0 40px rgba(241, 196, 15, 0.4);
+    }
+    100% { 
+        transform: scale(1.08); 
+        box-shadow: 
+            0 0 16px rgba(255, 240, 150, 1),
+            0 0 35px rgba(231, 76, 60, 0.9),
+            0 0 70px rgba(241, 196, 15, 0.8);
+    }
+}
+
+.uno-call-btn:active {
+    transform: scale(0.95) !important;
+}
+
+.uno-call-btn:disabled {
+    background: #27ae60 !important;
+    box-shadow: none !important;
+    animation: none !important;
+    cursor: default;
+    opacity: 0.9 !important;
+    transform: scale(1) !important;
 }
 
 .uno-call-btn:active {
@@ -687,14 +717,24 @@ button:disabled {
 }
 
 .result-trophy {
-    font-size: 48px;
+    font-size: 52px;
     margin-bottom: 10px;
-    animation: trophyBounce 1.5s infinite ease-in-out;
+    /* トロフィー自体を黄金の光でブルームさせる */
+    filter: drop-shadow(0 0 12px rgba(241, 196, 15, 0.9)) 
+            drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+    animation: trophyGlowBounce 1.8s infinite ease-in-out;
 }
 
-@keyframes trophyBounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+@keyframes trophyGlowBounce {
+    0%, 100% { 
+        transform: translateY(0) scale(1); 
+        filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.8));
+    }
+    50% { 
+        transform: translateY(-8px) scale(1.05); 
+        filter: drop-shadow(0 0 22px rgba(255, 235, 59, 1)) 
+                drop-shadow(0 0 45px rgba(241, 196, 15, 0.8));
+    }
 }
 
 .result-card h2 {
@@ -802,5 +842,38 @@ button:disabled {
     100% {
         /* 周囲の部屋にも目が慣れて、全体がクリアに見える */
         opacity: 0.2;
+    }
+}
+
+.bloom-glow-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: 2px solid #fff;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: bold;
+    
+    /* ▼ ここで複数の光を重ねて「ブルーム（にじみ）」を表現する */
+    box-shadow: 
+        0 0 8px rgba(255, 230, 100, 0.9),   /* 芯にある強い光 */
+        0 0 20px rgba(231, 76, 60, 0.8),    /* 周囲に広がる赤橙色の光 */
+        0 0 40px rgba(241, 196, 15, 0.5);   /* さらに遠くへふんわり溶け出す金色の光 */
+        
+    /* ふんわり光が脈打つアニメーションを合わせるとさらに効果的 */
+    animation: bloomPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes bloomPulse {
+    0% {
+        box-shadow: 
+            0 0 6px rgba(255, 230, 100, 0.7),
+            0 0 15px rgba(231, 76, 60, 0.6),
+            0 0 30px rgba(241, 196, 15, 0.4);
+    }
+    100% {
+        box-shadow: 
+            0 0 12px rgba(255, 240, 150, 1),
+            0 0 28px rgba(231, 76, 60, 0.9),
+            0 0 55px rgba(241, 196, 15, 0.7);
     }
 }
