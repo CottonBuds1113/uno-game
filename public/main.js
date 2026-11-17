@@ -576,6 +576,8 @@ function renderHand() {
         } else {
             cardDiv.onmousedown = (e) => {
                 e.preventDefault();
+                const startX = e.clientX;
+                const startY = e.clientY;
                 const rect = cardDiv.getBoundingClientRect();
                 
                 const offsetX = e.clientX - rect.left;
@@ -592,7 +594,16 @@ function renderHand() {
 
                 cardDiv.style.opacity = '0.2';
 
+                let hasMoved = false;
+
                 function onMouseMove(moveEvent) {
+                    const dx = Math.abs(moveEvent.clientX - startX);
+                    const dy = Math.abs(moveEvent.clientY - startY);
+                    
+                    if (dx > 5 || dy > 5) {
+                        hasMoved = true;
+                    }
+
                     const x = moveEvent.clientX - offsetX;
                     const y = moveEvent.clientY - offsetY;
                     clone.style.left = `${x}px`;
@@ -614,7 +625,7 @@ function renderHand() {
                         upEvent.clientY <= dropRect.bottom
                     );
 
-                    if (isInside) {
+                    if (isInside && hasMoved) {
                         document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
                         playSelectedCard(card, index);
@@ -637,7 +648,9 @@ function renderHand() {
                 window.addEventListener('mouseup', onMouseUp);
             };
 
-            cardDiv.onclick = () => { playSelectedCard(card, index); };
+            cardDiv.onclick = (e) => {
+                playSelectedCard(card, index);
+            };
         }
 
         handDiv.appendChild(cardDiv);
@@ -712,7 +725,6 @@ window.selectWildColor = function(color) {
     }
 };
 
-// ▼ ワイルドカード（色選択）のキャンセル処理
 window.cancelWildColor = function() {
     colorPickerModal.style.display = 'none';
     pendingWildCardIndex = null;
@@ -720,7 +732,6 @@ window.cancelWildColor = function() {
     selectedSwapTargetId = null;
 };
 
-// ▼ 手札交換モーダルのキャンセル処理
 window.cancelSwapModal = function() {
     swapPlayerModal.style.display = 'none';
     pendingSwapCardIndex = null;
