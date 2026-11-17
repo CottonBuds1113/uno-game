@@ -38,7 +38,6 @@ const translations = {
         creditsBody: "<strong>UNO Online Multiplayer</strong><br>Powered by Node.js, Express & Socket.IO<br>UI / Visual Effects: Custom Dark-Wood & Bloom CSS",
         gameOverTitle: "GAME OVER",
         lobbyBtn: "ロビーへ",
-        // ダイナミックテキスト
         spectatorModeMsg: "👀 観戦モード中（試合を観戦しています）",
         myTurnMsg: "★ あなたの番です！出せるカードを場に出すか、山札から引くか、UNOボタンを押してください",
         drawNBtn: (n) => `山札から ${n}枚引く`,
@@ -95,7 +94,6 @@ const translations = {
         creditsBody: "<strong>UNO Online Multiplayer</strong><br>Powered by Node.js, Express & Socket.IO<br>UI / Visual Effects: Custom Dark-Wood & Bloom CSS",
         gameOverTitle: "GAME OVER",
         lobbyBtn: "Back to Lobby",
-        // Dynamic text
         spectatorModeMsg: "👀 Spectating mode (Watching the match)",
         myTurnMsg: "★ Your turn! Play a card, draw from the deck, or call UNO!",
         drawNBtn: (n) => `Draw ${n} cards`,
@@ -120,7 +118,6 @@ const translations = {
     }
 };
 
-// 現在の言語をブラウザ設定から自動検知（英語圏なら 'en'、それ以外は基本 'ja'）
 let currentLang = navigator.language && navigator.language.startsWith('en') ? 'en' : 'ja';
 
 function t(key, ...args) {
@@ -144,16 +141,13 @@ function applyLanguage(lang) {
         el.setAttribute('title', t(key));
     });
 
-    // マニュアル内のHTML箇条書きを言語別に更新
     const manualList = document.getElementById('manual-list-content');
     if (manualList) manualList.innerHTML = t('manualHtml');
 
-    // セレクトボックスの選択肢も同期
     const langSelect = document.getElementById('lang-select');
     if (langSelect) langSelect.value = lang;
 }
 
-// 起動時に自動検知した言語を適用
 window.addEventListener('DOMContentLoaded', () => {
     applyLanguage(currentLang);
     const langSelect = document.getElementById('lang-select');
@@ -164,9 +158,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ====================================
-// 以下、既存のゲームロジック
-// ====================================
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
 
@@ -581,12 +572,14 @@ function renderHand() {
         if (!isPlayable) {
             cardDiv.classList.add('disabled');
         } else {
+            // ▼ カードを高速でカーソルに吸い付かせてドラッグする処理
             cardDiv.onmousedown = (e) => {
                 e.preventDefault();
-                const startX = e.clientX;
-                const startY = e.clientY;
                 const rect = cardDiv.getBoundingClientRect();
                 
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+
                 const clone = cardDiv.cloneNode(true);
                 clone.style.position = 'fixed';
                 clone.style.left = `${rect.left}px`;
@@ -599,9 +592,11 @@ function renderHand() {
                 cardDiv.style.opacity = '0.2';
 
                 function onMouseMove(moveEvent) {
-                    const dx = moveEvent.clientX - startX;
-                    const dy = moveEvent.clientY - startY;
-                    clone.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+                    const x = moveEvent.clientX - offsetX;
+                    const y = moveEvent.clientY - offsetY;
+                    clone.style.left = `${x}px`;
+                    clone.style.top = `${y}px`;
+                    clone.style.transform = `scale(1.1)`;
                 }
 
                 function onMouseUp(upEvent) {
@@ -624,11 +619,10 @@ function renderHand() {
                         playSelectedCard(card, index);
                     } else {
                         const finalRect = cardDiv.getBoundingClientRect();
-                        const returnDx = finalRect.left - rect.left;
-                        const returnDy = finalRect.top - rect.top;
-
-                        clone.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
-                        clone.style.transform = `translate(${returnDx}px, ${returnDy}px) scale(1)`;
+                        clone.style.transition = 'transform 0.25s ease, opacity 0.25s ease, left 0.25s ease, top 0.25s ease';
+                        clone.style.left = `${finalRect.left}px`;
+                        clone.style.top = `${finalRect.top}px`;
+                        clone.style.transform = 'scale(1)';
                         clone.style.opacity = '0.7';
 
                         setTimeout(() => {

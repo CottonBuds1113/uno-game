@@ -9,7 +9,7 @@ body {
     color: white;
     margin: 0;
     padding: 20px;
-    padding-top: 74px; /* 上部メニューバーとの兼ね合い */
+    padding-top: 74px;
     user-select: none;
     transition: filter 0.15s ease;
 }
@@ -165,7 +165,6 @@ body {
     }
 }
 
-/* ▼ ロビーの「UNO」ロゴ（シンプル＆立体的な木彫り風） */
 #lobby-screen h2 {
     font-size: 80px;
     font-weight: 900;
@@ -634,6 +633,7 @@ button:disabled {
     100% { opacity: 0; }
 }
 
+/* ▼ UNO宣言時の流れるテロップ演出（中心で止まらず、中央付近で一度だけスローダウンするアニメーション） */
 .uno-scrolling-text {
     position: absolute;
     white-space: nowrap;
@@ -643,27 +643,27 @@ button:disabled {
     font-size: 36px;
     letter-spacing: 2px;
     text-shadow: 0 4px 14px rgba(0, 0, 0, 0.9);
-    animation: slideAcrossWithPause 2.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: slideAcrossWithPause 2.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes slideAcrossWithPause {
     0% {
-        left: -10%;
+        left: -15%;
         transform: translateX(-100%);
         opacity: 0;
     }
-    22% {
-        left: 48%;
+    40% {
+        left: 44%;
         transform: translateX(-50%);
         opacity: 1;
     }
-    75% {
-        left: 52%;
+    55% {
+        left: 56%;
         transform: translateX(-50%);
         opacity: 1;
     }
     100% {
-        left: 110%;
+        left: 115%;
         transform: translateX(0%);
         opacity: 0;
     }
