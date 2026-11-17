@@ -1004,3 +1004,16 @@ button:disabled {
     0% { opacity: 0.6; }
     100% { opacity: 1; }
 }
+
+/* 場のカードエリア：ドラッグ中のカードが重なったときのハイライト演出 */
+#discard-area.drag-over {
+    border-color: #2ecc71 !important;
+    background-color: rgba(46, 204, 113, 0.25) !important;
+    box-shadow: 0 0 20px rgba(46, 204, 113, 0.7);
+    transform: scale(1.05);
+    transition: all 0.15s ease;
+}
+
+#discard-area {
+    transition: all 0.15s ease;
+}

@@ -595,6 +595,7 @@ function renderHand() {
                 cardDiv.style.opacity = '0.2';
 
                 let hasMoved = false;
+                const discardArea = document.getElementById('discard-area');
 
                 function onMouseMove(moveEvent) {
                     const dx = Math.abs(moveEvent.clientX - startX);
@@ -608,16 +609,34 @@ function renderHand() {
                     const y = moveEvent.clientY - offsetY;
                     clone.style.left = `${x}px`;
                     clone.style.top = `${y}px`;
-                    clone.style.transform = `scale(1.1)`;
+                    clone.style.transform = `scale(1.12)`;
+
+                    if (discardArea) {
+                        const dropRect = discardArea.getBoundingClientRect();
+                        const isInsideNow = (
+                            moveEvent.clientX >= dropRect.left &&
+                            moveEvent.clientX <= dropRect.right &&
+                            moveEvent.clientY >= dropRect.top &&
+                            moveEvent.clientY <= dropRect.bottom
+                        );
+
+                        if (isInsideNow) {
+                            discardArea.classList.add('drag-over');
+                        } else {
+                            discardArea.classList.remove('drag-over');
+                        }
+                    }
                 }
 
                 function onMouseUp(upEvent) {
                     window.removeEventListener('mousemove', onMouseMove);
                     window.removeEventListener('mouseup', onMouseUp);
 
-                    const discardArea = document.getElementById('discard-area');
-                    const dropRect = discardArea.getBoundingClientRect();
+                    if (discardArea) {
+                        discardArea.classList.remove('drag-over');
+                    }
 
+                    const dropRect = discardArea.getBoundingClientRect();
                     const isInside = (
                         upEvent.clientX >= dropRect.left &&
                         upEvent.clientX <= dropRect.right &&
