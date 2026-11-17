@@ -160,8 +160,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-const socket = io();
-
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
 
