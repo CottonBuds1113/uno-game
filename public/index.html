@@ -8,10 +8,23 @@
 </head>
 <body>
 
-    <!-- ▼ スポットライト演出用のオーバーレイ -->
+    <!-- ▼ 上部システムメニューバー -->
+    <header id="top-menu-bar">
+        <div class="menu-left">
+            <span class="menu-brand">UNO ONLINE</span>
+        </div>
+        <nav class="menu-right">
+            <button id="menu-manual-btn" class="menu-btn" title="遊び方・ルール">📖 マニュアル</button>
+            <button id="menu-settings-btn" class="menu-btn" title="画面明度・言語・サウンド">⚙️ 設定</button>
+            <button id="menu-credits-btn" class="menu-btn" title="クレジット">ℹ️ クレジット</button>
+            <button id="menu-leave-btn" class="menu-btn danger" style="display: none;" title="部屋から退出">🚪 退出</button>
+        </nav>
+    </header>
+
+    <!-- スポットライト演出用のオーバーレイ -->
     <div id="lobby-spotlight"></div>
 
-    <!-- ▼ 汎用ローディング画面（接続中・参加処理中） -->
+    <!-- 汎用ローディング画面 -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="loading-spinner"></div>
         <p class="loading-text">Loading...</p>
@@ -39,7 +52,7 @@
                     <input type="checkbox" id="swap-rule-checkbox" checked>
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">手札交換カードを含める</span>
+                <span class="toggle-label">手札交換カード（スワップ）を含める</span>
             </div>
 
             <!-- 観戦モードのスイッチ -->
@@ -48,7 +61,7 @@
                     <input type="checkbox" id="spectator-rule-checkbox" checked>
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">観戦（オン）｜途中参加（オフ）</span>
+                <span class="toggle-label">観戦モード（オン）｜途中参加モード（オフ）</span>
             </div>
 
             <div class="button-group">
@@ -100,6 +113,59 @@
         <div class="color-picker-content">
             <p>手札を交換する相手を選んでください</p>
             <div id="swap-player-buttons" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div id="settings-modal" class="sys-modal-overlay">
+        <div class="sys-modal-card">
+            <h3>⚙️ システム設定</h3>
+            <div class="sys-setting-item">
+                <label for="brightness-slider">☀️ 画面の明度: <span id="brightness-val">100</span>%</label>
+                <input type="range" id="brightness-slider" min="50" max="130" value="100">
+            </div>
+            <div class="sys-setting-item">
+                <label for="sound-toggle">🔊 サウンド効果 (SE)</label>
+                <input type="checkbox" id="sound-toggle" checked>
+            </div>
+            <div class="sys-setting-item">
+                <label for="lang-select">🌐 言語 / Language</label>
+                <select id="lang-select">
+                    <option value="ja" selected>日本語</option>
+                    <option value="en">English (準備中)</option>
+                </select>
+            </div>
+            <button class="primary-btn" onclick="closeSysModal('settings-modal')">閉じる</button>
+        </div>
+    </div>
+
+    <!-- マニュアルモーダル -->
+    <div id="manual-modal" class="sys-modal-overlay">
+        <div class="sys-modal-card" style="text-align: left; max-width: 500px;">
+            <h3 style="text-align: center;">📖 ゲームマニュアル</h3>
+            <ul style="line-height: 1.7; font-size: 14px; padding-left: 20px; color: #ecf0f1;">
+                <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
+                <li><strong>操作方法：</strong>出せるカードをドラッグ＆ドロップで場に出すか、タップ（クリック）で出せます。</li>
+                <li><strong>UNO宣言：</strong>手札が残り1枚になったら「🔥 UNO!」ボタンを押してください。忘れると他プレイヤーの指摘で2枚ドローのペナルティになります。</li>
+                <li><strong>ドロー累積：</strong>+2や+4に対して同じカードを重ねて次の人へ押し付けることができます（ロビー設定でON/OFF可能）。</li>
+                <li><strong>スワップ（⇄）：</strong>任意の相手1人と手札を丸ごと交換し、好きな色を指定できます。</li>
+            </ul>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="primary-btn" onclick="closeSysModal('manual-modal')">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- クレジットモーダル -->
+    <div id="credits-modal" class="sys-modal-overlay">
+        <div class="sys-modal-card">
+            <h3>ℹ️ クレジット</h3>
+            <p style="font-size: 14px; color: #bdc3c7; line-height: 1.6;">
+                <strong>UNO Online Multiplayer</strong><br>
+                Powered by Node.js, Express & Socket.IO<br>
+                UI / Visual Effects: Custom Dark-Wood & Bloom CSS
+            </p>
+            <button class="primary-btn" onclick="closeSysModal('credits-modal')">閉じる</button>
         </div>
     </div>
 

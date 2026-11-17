@@ -116,7 +116,6 @@ io.on('connection', (socket) => {
         const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard, allowSpectator);
         room.allowSpectator = allowSpectator;
 
-        // すでにゲームが始まっている場合は観戦者として参加
         if (room.players.length > 0 && room.allowSpectator) {
             const spectator = {
                 id: socket.id,

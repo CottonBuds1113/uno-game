@@ -33,9 +33,7 @@ let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
 let isMeSpectator = false;
 
-// ====================================
-// ローディング制御関数
-// ====================================
+// 汎用ローディング制御関数
 function showLoading(text = 'Loading...') {
     const overlay = document.getElementById('loading-overlay');
     const textEl = overlay ? overlay.querySelector('.loading-text') : null;
@@ -47,6 +45,50 @@ function hideLoading() {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.classList.add('hidden');
 }
+
+// 上部システムメニュー制御
+const menuManualBtn = document.getElementById('menu-manual-btn');
+const menuSettingsBtn = document.getElementById('menu-settings-btn');
+const menuCreditsBtn = document.getElementById('menu-credits-btn');
+const menuLeaveBtn = document.getElementById('menu-leave-btn');
+const brightnessSlider = document.getElementById('brightness-slider');
+const brightnessVal = document.getElementById('brightness-val');
+
+if (menuManualBtn) {
+    menuManualBtn.onclick = () => {
+        document.getElementById('manual-modal').style.display = 'flex';
+    };
+}
+if (menuSettingsBtn) {
+    menuSettingsBtn.onclick = () => {
+        document.getElementById('settings-modal').style.display = 'flex';
+    };
+}
+if (menuCreditsBtn) {
+    menuCreditsBtn.onclick = () => {
+        document.getElementById('credits-modal').style.display = 'flex';
+    };
+}
+if (menuLeaveBtn) {
+    menuLeaveBtn.onclick = () => {
+        if (confirm('現在の部屋から退出してロビーに戻りますか？')) {
+            location.reload();
+        }
+    };
+}
+
+if (brightnessSlider) {
+    brightnessSlider.oninput = (e) => {
+        const val = e.target.value;
+        if (brightnessVal) brightnessVal.innerText = val;
+        document.body.style.filter = `brightness(${val}%)`;
+    };
+}
+
+window.closeSysModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+};
 
 socket.on('connect', () => {
     myId = socket.id;
@@ -80,20 +122,16 @@ function joinRoom() {
     const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
 
     currentRoomId = roomId;
-    
-    // ▼ 参加ボタンを押した瞬間にローディングを表示
     showLoading('卓を囲んでいます...');
-    
     socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard, allowSpectator });
 }
 
 socket.on('joinedRoom', (roomId) => {
-    // ▼ 部屋に入れたらローディングを解除
     hideLoading();
-    
     lobbyScreen.style.display = 'none';
     gameScreen.style.display = 'block';
     currentRoomDisplay.innerText = `ルーム ID: ${roomId}`;
+    if (menuLeaveBtn) menuLeaveBtn.style.display = 'inline-block';
 });
 
 socket.on('unoDeclared', ({ playerId, playerName }) => {

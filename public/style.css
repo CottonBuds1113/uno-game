@@ -9,7 +9,122 @@ body {
     color: white;
     margin: 0;
     padding: 20px;
+    padding-top: 74px; /* 上部メニューバーとの兼ね合い */
     user-select: none;
+    transition: filter 0.15s ease;
+}
+
+/* ====================================
+   上部システムメニューバー & モーダル
+==================================== */
+#top-menu-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 46px;
+    background-color: rgba(10, 10, 10, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    z-index: 4000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.menu-brand {
+    font-weight: 900;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.menu-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.menu-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ecf0f1;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.menu-btn.danger {
+    background: rgba(231, 76, 60, 0.25);
+    border-color: rgba(231, 76, 60, 0.6);
+    color: #ff7675;
+}
+
+.menu-btn.danger:hover {
+    background: #e74c3c;
+    color: #ffffff;
+}
+
+.sys-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(3px);
+    justify-content: center;
+    align-items: center;
+    z-index: 5000;
+}
+
+.sys-modal-card {
+    background: #21170a;
+    background-image: url('brown-bg.jpg');
+    background-size: cover;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    padding: 25px 30px;
+    width: 90%;
+    max-width: 380px;
+    color: white;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
+}
+
+.sys-modal-card h3 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    letter-spacing: 1px;
+}
+
+.sys-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.sys-setting-item select {
+    background: #2c3e50;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 4px 8px;
 }
 
 #lobby-screen {
@@ -25,7 +140,8 @@ body {
     display: inline-block;
     max-width: 600px;
     width: 90%;
-    margin: 150px 0 200px 0;
+    margin-top: 160px;
+    margin-bottom: 320px;
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
     animation: simpleDeskSlide 0.85s cubic-bezier(0.05, 0.9, 0.1, 1) forwards;
     touch-action: manipulation;
@@ -49,22 +165,21 @@ body {
     }
 }
 
+/* ▼ ロビーの「UNO」ロゴ（シンプル＆立体的な木彫り風） */
 #lobby-screen h2 {
     font-size: 80px;
     font-weight: 900;
     letter-spacing: 6px;
     margin: 10px 10px 35px 10px;
-    color: #f8f9fa; /* わずかに温かみのある純白 */
-    text-decoration: underline;
+    color: #f8f9fa;
+    text-decoration: none;
     
-    /* ▼ 派手な発光をなくし、木の板に彫り込まれたような「深い立体感」と控えめな上品な白を表現 */
     text-shadow: 
-        0 1px 0 rgba(255, 255, 255, 0.4),  /* 表面に当たるわずかなハイライト */
-        0 -2px 0 rgba(0, 0, 0, 0.8),       /* 上部の影（彫り込み感） */
-        0 4px 6px rgba(0, 0, 0, 0.9),      /* 足元に落ちる重厚なドロップ影 */
-        0 0 20px rgba(255, 255, 255, 0.15);/* 周りにほんのり広がる大人の落ち着いた空気感 */
+        0 1px 0 rgba(255, 255, 255, 0.4),
+        0 -2px 0 rgba(0, 0, 0, 0.8),
+        0 4px 6px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(255, 255, 255, 0.15);
 
-    /* アニメーションを外し、静かに佇む高級感を演出 */
     animation: none;
 }
 
@@ -435,7 +550,6 @@ button:disabled {
     color: #ecf0f1;
 }
 
-/* UNO宣言ボタン（ブルーム効果で強力に発光） */
 .uno-call-btn {
     background: linear-gradient(135deg, #e74c3c, #f1c40f) !important;
     color: white !important;
@@ -558,6 +672,7 @@ button:disabled {
 @media screen and (max-width: 768px) {
     body {
         padding: 10px;
+        padding-top: 64px;
     }
 
     #lobby-screen {
@@ -768,9 +883,7 @@ button:disabled {
     transform: scale(1.05);
 }
 
-/* ====================================
-   ロビー登場時のスポットライト演出
-==================================== */
+/* スポットライト演出用 */
 #lobby-spotlight {
     position: fixed;
     top: 0;
@@ -841,9 +954,7 @@ button:disabled {
     }
 }
 
-/* ====================================
-   汎用ローディング画面（流用可能）
-==================================== */
+/* 汎用ローディング画面 */
 .loading-overlay {
     position: fixed;
     top: 0;
