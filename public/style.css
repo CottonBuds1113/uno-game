@@ -652,13 +652,8 @@ button:disabled {
         transform: translateX(-100%);
         opacity: 0;
     }
-    40% {
+    50% {
         left: 44%;
-        transform: translateX(-50%);
-        opacity: 1;
-    }
-    55% {
-        left: 56%;
         transform: translateX(-50%);
         opacity: 1;
     }
