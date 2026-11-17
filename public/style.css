@@ -653,7 +653,7 @@ button:disabled {
         opacity: 0;
     }
     50% {
-        left: 44%;
+        left: 50%;
         transform: translateX(-50%);
         opacity: 1;
     }
