@@ -14,10 +14,10 @@
             <span class="menu-brand">UNO ONLINE</span>
         </div>
         <nav class="menu-right">
-            <button id="menu-manual-btn" class="menu-btn" title="遊び方・ルール">📖 マニュアル</button>
-            <button id="menu-settings-btn" class="menu-btn" title="画面明度・言語・サウンド">⚙️ 設定</button>
-            <button id="menu-credits-btn" class="menu-btn" title="クレジット">ℹ️ クレジット</button>
-            <button id="menu-leave-btn" class="menu-btn danger" style="display: none;" title="部屋から退出">🚪 退出</button>
+            <button id="menu-manual-btn" class="menu-btn" data-i18n-title="manualTitle" data-i18n="manualBtn">📖 マニュアル</button>
+            <button id="menu-settings-btn" class="menu-btn" data-i18n-title="settingsTitle" data-i18n="settingsBtn">⚙️ 設定</button>
+            <button id="menu-credits-btn" class="menu-btn" data-i18n-title="creditsTitle" data-i18n="creditsBtn">ℹ️ クレジット</button>
+            <button id="menu-leave-btn" class="menu-btn danger" style="display: none;" data-i18n-title="leaveTitle" data-i18n="leaveBtn">🚪 退出</button>
         </nav>
     </header>
 
@@ -27,15 +27,15 @@
     <!-- 汎用ローディング画面 -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="loading-spinner"></div>
-        <p class="loading-text">Loading...</p>
+        <p class="loading-text" data-i18n="loadingText">Loading...</p>
     </div>
 
     <!-- ロビー画面 -->
     <div id="lobby-screen">
         <h2>UNO</h2>
         <div class="lobby-form">
-            <input type="text" id="player-name-input" placeholder="プレイヤー名を入力" />
-            <input type="text" id="room-id-input" placeholder="ルームID (例: 1234)" />
+            <input type="text" id="player-name-input" data-i18n-placeholder="namePlaceholder" placeholder="プレイヤー名を入力" />
+            <input type="text" id="room-id-input" data-i18n-placeholder="roomPlaceholder" placeholder="ルームID (例: 1234)" />
             
             <!-- ドロー累積スイッチ -->
             <div class="toggle-container">
@@ -43,7 +43,7 @@
                     <input type="checkbox" id="stack-rule-checkbox" checked>
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">ドロー累積（+2/+4重ね）ルール</span>
+                <span class="toggle-label" data-i18n="ruleStack">ドロー累積（+2/+4重ね）ルール</span>
             </div>
 
             <!-- 手札交換カード（スワップ）ルールのスイッチ -->
@@ -52,7 +52,7 @@
                     <input type="checkbox" id="swap-rule-checkbox" checked>
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">手札交換カード（スワップ）を含める</span>
+                <span class="toggle-label" data-i18n="ruleSwap">手札交換カード（スワップ）を含める</span>
             </div>
 
             <!-- 観戦モードのスイッチ -->
@@ -61,12 +61,12 @@
                     <input type="checkbox" id="spectator-rule-checkbox" checked>
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">観戦モード（オン）｜途中参加モード（オフ）</span>
+                <span class="toggle-label" data-i18n="ruleSpectator">観戦モード（オン）｜途中参加モード（オフ）</span>
             </div>
 
             <div class="button-group">
-                <button id="create-room-btn">部屋を作る</button>
-                <button id="join-room-btn">部屋に参加</button>
+                <button id="create-room-btn" data-i18n="createRoomBtn">部屋を作る</button>
+                <button id="join-room-btn" data-i18n="joinRoomBtn">部屋に参加</button>
             </div>
         </div>
     </div>
@@ -76,31 +76,31 @@
         <h2 id="current-room-display">ルーム ID: -</h2>
         
         <div id="game-info">
-            <p id="turn-info">待機中...</p>
+            <p id="turn-info" data-i18n="waitingText">待機中...</p>
             <div id="player-list-area">
-                <h4>プレイヤー</h4>
+                <h4 data-i18n="playersHeading">プレイヤー</h4>
                 <ul id="player-list"></ul>
             </div>
             
-            <p>場のカード:</p>
+            <p data-i18n="discardLabel">場のカード:</p>
             <div id="discard-area">
                 <div id="top-card" class="card">?</div>
             </div>
 
             <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; align-items: center;">
-                <button id="draw-btn">山札から引く</button>
+                <button id="draw-btn" data-i18n="drawBtn">山札から引く</button>
                 <button id="uno-btn" class="uno-call-btn" style="display: none;" disabled>🔥 UNO!</button>
             </div>
         </div>
 
-        <h3>あなたの手札</h3>
+        <h3 data-i18n="myHandHeading">あなたの手札</h3>
         <div id="hand"></div>
     </div>
 
     <!-- ワイルドカード用の色選択モーダル -->
     <div id="color-picker-modal">
         <div class="color-picker-content">
-            <p>変更する色を選んでください</p>
+            <p data-i18n="colorPickerPrompt">変更する色を選んでください</p>
             <button class="color-btn red" onclick="selectWildColor('red')"></button>
             <button class="color-btn blue" onclick="selectWildColor('blue')"></button>
             <button class="color-btn green" onclick="selectWildColor('green')"></button>
@@ -111,7 +111,7 @@
     <!-- 手札交換の相手を選ぶモーダル -->
     <div id="swap-player-modal">
         <div class="color-picker-content">
-            <p>手札を交換する相手を選んでください</p>
+            <p data-i18n="swapPrompt">手札を交換する相手を選んでください</p>
             <div id="swap-player-buttons" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;"></div>
         </div>
     </div>
@@ -119,39 +119,35 @@
     <!-- 設定モーダル -->
     <div id="settings-modal" class="sys-modal-overlay">
         <div class="sys-modal-card">
-            <h3>⚙️ システム設定</h3>
+            <h3 data-i18n="settingsModalTitle">⚙️ システム設定</h3>
             <div class="sys-setting-item">
-                <label for="brightness-slider">☀️ 画面の明度: <span id="brightness-val">100</span>%</label>
+                <label for="brightness-slider"><span data-i18n="brightnessLabel">☀️ 画面の明度</span>: <span id="brightness-val">100</span>%</label>
                 <input type="range" id="brightness-slider" min="50" max="130" value="100">
             </div>
             <div class="sys-setting-item">
-                <label for="sound-toggle">🔊 サウンド効果 (SE)</label>
+                <label for="sound-toggle" data-i18n="soundLabel">🔊 サウンド効果 (SE)</label>
                 <input type="checkbox" id="sound-toggle" checked>
             </div>
             <div class="sys-setting-item">
-                <label for="lang-select">🌐 言語 / Language</label>
+                <label for="lang-select" data-i18n="langLabel">🌐 言語 / Language</label>
                 <select id="lang-select">
-                    <option value="ja" selected>日本語</option>
-                    <option value="en">English (準備中)</option>
+                    <option value="ja">日本語</option>
+                    <option value="en">English</option>
                 </select>
             </div>
-            <button class="primary-btn" onclick="closeSysModal('settings-modal')">閉じる</button>
+            <button class="primary-btn" data-i18n="closeBtn" onclick="closeSysModal('settings-modal')">閉じる</button>
         </div>
     </div>
 
     <!-- マニュアルモーダル -->
     <div id="manual-modal" class="sys-modal-overlay">
         <div class="sys-modal-card" style="text-align: left; max-width: 500px;">
-            <h3 style="text-align: center;">📖 ゲームマニュアル</h3>
-            <ul style="line-height: 1.7; font-size: 14px; padding-left: 20px; color: #ecf0f1;">
-                <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
-                <li><strong>操作方法：</strong>出せるカードをドラッグ＆ドロップで場に出すか、タップ（クリック）で出せます。</li>
-                <li><strong>UNO宣言：</strong>手札が残り1枚になったら「🔥 UNO!」ボタンを押してください。忘れると他プレイヤーの指摘で2枚ドローのペナルティになります。</li>
-                <li><strong>ドロー累積：</strong>+2や+4に対して同じカードを重ねて次の人へ押し付けることができます（ロビー設定でON/OFF可能）。</li>
-                <li><strong>スワップ（⇄）：</strong>任意の相手1人と手札を丸ごと交換し、好きな色を指定できます。</li>
+            <h3 style="text-align: center;" data-i18n="manualModalTitle">📖 ゲームマニュアル</h3>
+            <ul id="manual-list-content" style="line-height: 1.7; font-size: 14px; padding-left: 20px; color: #ecf0f1;">
+                <!-- JSで言語別に差し替え -->
             </ul>
             <div style="text-align: center; margin-top: 15px;">
-                <button class="primary-btn" onclick="closeSysModal('manual-modal')">閉じる</button>
+                <button class="primary-btn" data-i18n="closeBtn" onclick="closeSysModal('manual-modal')">閉じる</button>
             </div>
         </div>
     </div>
@@ -159,13 +155,13 @@
     <!-- クレジットモーダル -->
     <div id="credits-modal" class="sys-modal-overlay">
         <div class="sys-modal-card">
-            <h3>ℹ️ クレジット</h3>
-            <p style="font-size: 14px; color: #bdc3c7; line-height: 1.6;">
+            <h3 data-i18n="creditsModalTitle">ℹ️ クレジット</h3>
+            <p style="font-size: 14px; color: #bdc3c7; line-height: 1.6;" data-i18n="creditsBody">
                 <strong>UNO Online Multiplayer</strong><br>
                 Powered by Node.js, Express & Socket.IO<br>
                 UI / Visual Effects: Custom Dark-Wood & Bloom CSS
             </p>
-            <button class="primary-btn" onclick="closeSysModal('credits-modal')">閉じる</button>
+            <button class="primary-btn" data-i18n="closeBtn" onclick="closeSysModal('credits-modal')">閉じる</button>
         </div>
     </div>
 
@@ -181,9 +177,9 @@
     <div id="result-modal" class="result-overlay">
         <div class="result-card">
             <div class="result-trophy">🏆</div>
-            <h2>GAME OVER</h2>
+            <h2 data-i18n="gameOverTitle">GAME OVER</h2>
             <p id="winner-text">勝者: プレイヤー名</p>
-            <button id="restart-btn" class="primary-btn" onclick="location.reload()">ロビーへ</button>
+            <button id="restart-btn" class="primary-btn" data-i18n="lobbyBtn" onclick="location.reload()">ロビーへ</button>
         </div>
     </div>
 </body>

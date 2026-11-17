@@ -1,5 +1,172 @@
 const socket = io();
 
+// ====================================
+// 多言語辞書 (i18n) 定義
+// ====================================
+const translations = {
+    ja: {
+        manualBtn: "📖 マニュアル",
+        settingsBtn: "⚙️ 設定",
+        creditsBtn: "ℹ️ クレジット",
+        leaveBtn: "🚪 退出",
+        manualTitle: "遊び方・ルール",
+        settingsTitle: "画面明度・言語・サウンド",
+        creditsTitle: "クレジット",
+        leaveTitle: "部屋から退出",
+        loadingText: "Loading...",
+        namePlaceholder: "プレイヤー名を入力",
+        roomPlaceholder: "ルームID (例: 1234)",
+        ruleStack: "ドロー累積（+2/+4重ね）ルール",
+        ruleSwap: "手札交換カード（スワップ）を含める",
+        ruleSpectator: "観戦モード（オン）｜途中参加モード（オフ）",
+        createRoomBtn: "部屋を作る",
+        joinRoomBtn: "部屋に参加",
+        waitingText: "待機中...",
+        playersHeading: "プレイヤー",
+        discardLabel: "場のカード:",
+        drawBtn: "山札から引く",
+        myHandHeading: "あなたの手札",
+        colorPickerPrompt: "変更する色を選んでください",
+        swapPrompt: "手札を交換する相手を選んでください",
+        settingsModalTitle: "⚙️ システム設定",
+        brightnessLabel: "☀️ 画面の明度",
+        soundLabel: "🔊 サウンド効果 (SE)",
+        langLabel: "🌐 言語 / Language",
+        closeBtn: "閉じる",
+        manualModalTitle: "📖 ゲームマニュアル",
+        creditsModalTitle: "ℹ️ クレジット",
+        creditsBody: "<strong>UNO Online Multiplayer</strong><br>Powered by Node.js, Express & Socket.IO<br>UI / Visual Effects: Custom Dark-Wood & Bloom CSS",
+        gameOverTitle: "GAME OVER",
+        lobbyBtn: "ロビーへ",
+        // ダイナミックテキスト
+        spectatorModeMsg: "👀 観戦モード中（試合を観戦しています）",
+        myTurnMsg: "★ あなたの番です！出せるカードを場に出すか、山札から引くか、UNOボタンを押してください",
+        drawNBtn: (n) => `山札から ${n}枚引く`,
+        stackWarning: (n) => `🔥 警告！+${n} 累積中！カードを重ねるか、山札から ${n}枚 引いてください`,
+        stackingInfo: (n) => `⚠️ 現在 +${n} 累積中！次の人の運命やいかに…`,
+        waitingTurn: "相手のターンを待っています...",
+        spectatorsLabel: (names) => `👀 観戦者: ${names}`,
+        noHandSpectator: "※あなたは現在観戦中です（手札はありません）",
+        declaredBadge: "✔ 宣言済み！",
+        reportPenaltyBtn: "⚠️ UNO言い忘れ指摘！",
+        swappedNotice: (p1, p2) => `🔄 ${p1} が ${p2} と手札を交換しました！`,
+        penaltyNotice: (name) => `⚠️ ${name} はUNO宣言を忘れていたためペナルティ！(2枚ドロー)`,
+        stackPenalty: (name, n) => `💥 ${name} は累積ペナルティで ${n}枚 引かされました！`,
+        winnerMsg: (name) => `${name} の勝利です！`,
+        manualHtml: `
+            <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
+            <li><strong>操作方法：</strong>出せるカードをドラッグ＆ドロップで場に出すか、タップ（クリック）で出せます。</li>
+            <li><strong>UNO宣言：</strong>手札が残り1枚になったら「🔥 UNO!」ボタンを押してください。忘れると他プレイヤーの指摘で2枚ドローのペナルティになります。</li>
+            <li><strong>ドロー累積：</strong>+2や+4に対して同じカードを重ねて次の人へ押し付けることができます（ロビー設定でON/OFF可能）。</li>
+            <li><strong>スワップ（⇄）：</strong>任意の相手1人と手札を丸ごと交換し、好きな色を指定できます。</li>
+        `
+    },
+    en: {
+        manualBtn: "📖 Manual",
+        settingsBtn: "⚙️ Settings",
+        creditsBtn: "ℹ️ Credits",
+        leaveBtn: "🚪 Leave",
+        manualTitle: "How to Play & Rules",
+        settingsTitle: "Brightness, Language & Sound",
+        creditsTitle: "Credits",
+        leaveTitle: "Leave Room",
+        loadingText: "Loading...",
+        namePlaceholder: "Enter your name",
+        roomPlaceholder: "Room ID (e.g. 1234)",
+        ruleStack: "Stacking Rule (+2 / +4)",
+        ruleSwap: "Include Swap Hand Cards",
+        ruleSpectator: "Spectator Mode (On) | Late-Join (Off)",
+        createRoomBtn: "Create Room",
+        joinRoomBtn: "Join Room",
+        waitingText: "Waiting...",
+        playersHeading: "Players",
+        discardLabel: "Discard Pile:",
+        drawBtn: "Draw Card",
+        myHandHeading: "Your Hand",
+        colorPickerPrompt: "Choose a color",
+        swapPrompt: "Choose a player to swap hands with",
+        settingsModalTitle: "⚙️ System Settings",
+        brightnessLabel: "☀️ Brightness",
+        soundLabel: "🔊 Sound Effects (SE)",
+        langLabel: "🌐 Language",
+        closeBtn: "Close",
+        manualModalTitle: "📖 Game Manual",
+        creditsModalTitle: "ℹ️ Credits",
+        creditsBody: "<strong>UNO Online Multiplayer</strong><br>Powered by Node.js, Express & Socket.IO<br>UI / Visual Effects: Custom Dark-Wood & Bloom CSS",
+        gameOverTitle: "GAME OVER",
+        lobbyBtn: "Back to Lobby",
+        // Dynamic text
+        spectatorModeMsg: "👀 Spectating mode (Watching the match)",
+        myTurnMsg: "★ Your turn! Play a card, draw from the deck, or call UNO!",
+        drawNBtn: (n) => `Draw ${n} cards`,
+        stackWarning: (n) => `🔥 Warning! +${n} stacking! Play a card or draw ${n} cards`,
+        stackingInfo: (n) => `⚠️ +${n} penalty stacked! What's next...`,
+        waitingTurn: "Waiting for opponent's turn...",
+        spectatorsLabel: (names) => `👀 Spectators: ${names}`,
+        noHandSpectator: "※ You are currently spectating (No hand)",
+        declaredBadge: "✔ Called!",
+        reportPenaltyBtn: "⚠️ Call UNO Failure!",
+        swappedNotice: (p1, p2) => `🔄 ${p1} swapped hands with ${p2}!`,
+        penaltyNotice: (name) => `⚠️ ${name} forgot to call UNO and drew 2 penalty cards!`,
+        stackPenalty: (name, n) => `💥 ${name} took ${n} cards from the accumulated penalty!`,
+        winnerMsg: (name) => `${name} wins the game!`,
+        manualHtml: `
+            <li><strong>Basic Rules:</strong> Match the top card by color, number, or symbol.</li>
+            <li><strong>Controls:</strong> Drag & drop or tap a playable card to play.</li>
+            <li><strong>UNO Call:</strong> Press the "🔥 UNO!" button when you have 1 card left. Forget to call and get a 2-card penalty if reported!</li>
+            <li><strong>Stacking:</strong> Stack +2 or +4 cards onto the previous one to pass the penalty to the next player.</li>
+            <li><strong>Swap (⇄):</strong> Swap your entire hand with any chosen player and pick a new color.</li>
+        `
+    }
+};
+
+// 現在の言語をブラウザ設定から自動検知（英語圏なら 'en'、それ以外は基本 'ja'）
+let currentLang = navigator.language && navigator.language.startsWith('en') ? 'en' : 'ja';
+
+function t(key, ...args) {
+    const dict = translations[currentLang] || translations.ja;
+    const val = dict[key] || translations.ja[key] || key;
+    return typeof val === 'function' ? val(...args) : val;
+}
+
+function applyLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.innerText = t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.setAttribute('placeholder', t(key));
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        el.setAttribute('title', t(key));
+    });
+
+    // マニュアル内のHTML箇条書きを言語別に更新
+    const manualList = document.getElementById('manual-list-content');
+    if (manualList) manualList.innerHTML = t('manualHtml');
+
+    // セレクトボックスの選択肢も同期
+    const langSelect = document.getElementById('lang-select');
+    if (langSelect) langSelect.value = lang;
+}
+
+// 起動時に自動検知した言語を適用
+window.addEventListener('DOMContentLoaded', () => {
+    applyLanguage(currentLang);
+    const langSelect = document.getElementById('lang-select');
+    if (langSelect) {
+        langSelect.onchange = (e) => {
+            applyLanguage(e.target.value);
+        };
+    }
+});
+
+// ====================================
+// 以下、既存のゲームロジック
+// ====================================
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
 
@@ -33,7 +200,6 @@ let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
 let isMeSpectator = false;
 
-// 汎用ローディング制御関数
 function showLoading(text = 'Loading...') {
     const overlay = document.getElementById('loading-overlay');
     const textEl = overlay ? overlay.querySelector('.loading-text') : null;
@@ -46,7 +212,6 @@ function hideLoading() {
     if (overlay) overlay.classList.add('hidden');
 }
 
-// 上部システムメニュー制御
 const menuManualBtn = document.getElementById('menu-manual-btn');
 const menuSettingsBtn = document.getElementById('menu-settings-btn');
 const menuCreditsBtn = document.getElementById('menu-credits-btn');
@@ -55,23 +220,17 @@ const brightnessSlider = document.getElementById('brightness-slider');
 const brightnessVal = document.getElementById('brightness-val');
 
 if (menuManualBtn) {
-    menuManualBtn.onclick = () => {
-        document.getElementById('manual-modal').style.display = 'flex';
-    };
+    menuManualBtn.onclick = () => { document.getElementById('manual-modal').style.display = 'flex'; };
 }
 if (menuSettingsBtn) {
-    menuSettingsBtn.onclick = () => {
-        document.getElementById('settings-modal').style.display = 'flex';
-    };
+    menuSettingsBtn.onclick = () => { document.getElementById('settings-modal').style.display = 'flex'; };
 }
 if (menuCreditsBtn) {
-    menuCreditsBtn.onclick = () => {
-        document.getElementById('credits-modal').style.display = 'flex';
-    };
+    menuCreditsBtn.onclick = () => { document.getElementById('credits-modal').style.display = 'flex'; };
 }
 if (menuLeaveBtn) {
     menuLeaveBtn.onclick = () => {
-        if (confirm('現在の部屋から退出してロビーに戻りますか？')) {
+        if (confirm(currentLang === 'en' ? 'Leave the room and return to lobby?' : '現在の部屋から退出してロビーに戻りますか？')) {
             location.reload();
         }
     };
@@ -90,9 +249,7 @@ window.closeSysModal = function(modalId) {
     if (modal) modal.style.display = 'none';
 };
 
-socket.on('connect', () => {
-    myId = socket.id;
-});
+socket.on('connect', () => { myId = socket.id; });
 
 createRoomBtn.onclick = () => {
     const randomRoom = Math.floor(1000 + Math.random() * 9000).toString();
@@ -100,16 +257,14 @@ createRoomBtn.onclick = () => {
     joinRoom();
 };
 
-joinRoomBtn.onclick = () => {
-    joinRoom();
-};
+joinRoomBtn.onclick = () => { joinRoom(); };
 
 function joinRoom() {
     const roomId = roomIdInput.value.trim();
-    const name = playerNameInput.value.trim() || 'Player';
+    const name = playerNameInput.value.trim() || (currentLang === 'en' ? 'Player' : 'プレイヤー');
 
     if (!roomId) {
-        alert('ルームIDを入力してください');
+        alert(currentLang === 'en' ? 'Please enter a room ID' : 'ルームIDを入力してください');
         return;
     }
 
@@ -122,7 +277,7 @@ function joinRoom() {
     const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
 
     currentRoomId = roomId;
-    showLoading('卓を囲んでいます...');
+    showLoading(currentLang === 'en' ? 'Joining room...' : '卓を囲んでいます...');
     socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard, allowSpectator });
 }
 
@@ -130,28 +285,24 @@ socket.on('joinedRoom', (roomId) => {
     hideLoading();
     lobbyScreen.style.display = 'none';
     gameScreen.style.display = 'block';
-    currentRoomDisplay.innerText = `ルーム ID: ${roomId}`;
+    currentRoomDisplay.innerText = `Room ID: ${roomId}`;
     if (menuLeaveBtn) menuLeaveBtn.style.display = 'inline-block';
 });
 
 socket.on('unoDeclared', ({ playerId, playerName }) => {
-    if (unoAnimationTimeout) {
-        clearTimeout(unoAnimationTimeout);
-    }
+    if (unoAnimationTimeout) clearTimeout(unoAnimationTimeout);
 
     if (playerId === myId) {
-        unoScrollingText.innerText = 'UNO！';
+        unoScrollingText.innerText = currentLang === 'en' ? 'UNO!' : 'UNO！';
     } else {
-        unoScrollingText.innerText = `${playerName}がUNOを宣言した`;
+        unoScrollingText.innerText = currentLang === 'en' ? `${playerName} called UNO!` : `${playerName}がUNOを宣言した`;
     }
 
     unoOverlay.style.display = 'none';
     void unoOverlay.offsetWidth;
     unoOverlay.style.display = 'flex';
 
-    unoAnimationTimeout = setTimeout(() => {
-        unoOverlay.style.display = 'none';
-    }, 2600);
+    unoAnimationTimeout = setTimeout(() => { unoOverlay.style.display = 'none'; }, 2600);
 });
 
 function getCardLabel(card) {
@@ -172,7 +323,6 @@ function createCardElement(card) {
     cardDiv.className = `card ${colorClass}`;
 
     const label = getCardLabel(card);
-
     const cornerTop = document.createElement('div');
     cornerTop.className = 'card-corner-top';
     cornerTop.innerText = label;
@@ -212,7 +362,7 @@ socket.on('gameState', (data) => {
     }
 
     if (isMeSpectator) {
-        turnInfo.innerText = "👀 観戦モード中（試合を観戦しています）";
+        turnInfo.innerText = t('spectatorModeMsg');
         turnInfo.style.color = "#3498db";
         drawBtn.style.display = 'none';
     } else {
@@ -221,23 +371,23 @@ socket.on('gameState', (data) => {
 
         if (isMyTurn) {
             if (data.pendingDrawCount > 0) {
-                turnInfo.innerText = `🔥 警告！+${data.pendingDrawCount} 累積中！カードを重ねるか、山札から ${data.pendingDrawCount}枚 引いてください`;
+                turnInfo.innerText = t('stackWarning', data.pendingDrawCount);
                 turnInfo.style.color = "#e74c3c";
-                drawBtn.innerText = `山札から ${data.pendingDrawCount}枚引く`;
+                drawBtn.innerText = t('drawNBtn', data.pendingDrawCount);
             } else {
-                turnInfo.innerText = "★ あなたの番です！出せるカードを場に出すか、山札から引いてください";
+                turnInfo.innerText = t('myTurnMsg');
                 turnInfo.style.color = "#2ecc71";
-                drawBtn.innerText = "山札から引く";
+                drawBtn.innerText = t('drawBtn');
             }
             drawBtn.disabled = false;
         } else {
             if (data.pendingDrawCount > 0) {
-                turnInfo.innerText = `⚠️ 現在 +${data.pendingDrawCount} 累積中！次の人の運命やいかに…`;
+                turnInfo.innerText = t('stackingInfo', data.pendingDrawCount);
             } else {
-                turnInfo.innerText = "相手のターンを待っています...";
+                turnInfo.innerText = t('waitingTurn');
             }
             turnInfo.style.color = "#ecf0f1";
-            drawBtn.innerText = "山札から引く";
+            drawBtn.innerText = t('drawBtn');
             drawBtn.disabled = true;
         }
     }
@@ -253,7 +403,7 @@ socket.on('gameState', (data) => {
         const header = document.createElement('div');
         header.className = 'player-card-header';
 
-        const isMe = p.id === myId ? ' (あなた)' : '';
+        const isMe = p.id === myId ? (currentLang === 'en' ? ' (You)' : ' (あなた)') : '';
         const nameSpan = document.createElement('span');
         nameSpan.innerText = `${p.name}${isMe}`;
         header.appendChild(nameSpan);
@@ -286,7 +436,7 @@ socket.on('gameState', (data) => {
 
         const countLabel = document.createElement('span');
         countLabel.className = 'hand-count-label';
-        countLabel.innerText = `${p.handCount}枚`;
+        countLabel.innerText = currentLang === 'en' ? `${p.handCount} left` : `${p.handCount}枚`;
         miniHandDiv.appendChild(countLabel);
 
         li.appendChild(miniHandDiv);
@@ -296,7 +446,7 @@ socket.on('gameState', (data) => {
             reportBtn.className = 'callout-penalty-btn';
             reportBtn.style.marginLeft = '0';
             reportBtn.style.marginTop = '4px';
-            reportBtn.innerText = '⚠️ UNO言い忘れ指摘！';
+            reportBtn.innerText = t('reportPenaltyBtn');
             reportBtn.onclick = () => {
                 socket.emit('reportUnoFailure', { roomId: currentRoomId, targetPlayerId: p.id });
             };
@@ -312,7 +462,7 @@ socket.on('gameState', (data) => {
         specLi.style.color = '#bdc3c7';
         specLi.style.fontSize = '13px';
         specLi.style.marginTop = '5px';
-        specLi.innerText = `👀 観戦者: ${data.spectators.map(s => s.name).join(', ')}`;
+        specLi.innerText = t('spectatorsLabel', data.spectators.map(s => s.name).join(', '));
         playerList.appendChild(specLi);
     }
 
@@ -334,8 +484,8 @@ socket.on('gameState', (data) => {
             center.innerText = label;
 
             if (data.topCard.color === 'wild') {
-                const colorNames = { red: '赤', blue: '青', green: '緑', yellow: '黄' };
-                const designated = colorNames[data.topCard.designatedColor] || '赤';
+                const colorNames = currentLang === 'en' ? { red: 'Red', blue: 'Blue', green: 'Green', yellow: 'Yellow' } : { red: '赤', blue: '青', green: '緑', yellow: '黄' };
+                const designated = colorNames[data.topCard.designatedColor] || (currentLang === 'en' ? 'Red' : '赤');
                 center.innerText = `${label}\n(${designated})`;
                 center.style.fontSize = '16px';
             }
@@ -374,7 +524,7 @@ function renderHand() {
     if (isMeSpectator) {
         unoBtn.style.display = 'none';
         const msg = document.createElement('p');
-        msg.innerText = "※あなたは現在観戦中です（手札はありません）";
+        msg.innerText = t('noHandSpectator');
         msg.style.color = "#bdc3c7";
         handDiv.appendChild(msg);
         return;
@@ -386,7 +536,7 @@ function renderHand() {
         unoBtn.style.display = 'inline-block';
         if (hasDeclaredUnoThisTurn) {
             unoBtn.disabled = true;
-            unoBtn.innerText = "✔ 宣言済み！";
+            unoBtn.innerText = t('declaredBadge');
         } else {
             unoBtn.disabled = false;
             unoBtn.innerText = "🔥 UNO!";
@@ -482,9 +632,7 @@ function renderHand() {
                         clone.style.opacity = '0.7';
 
                         setTimeout(() => {
-                            if (document.body.contains(clone)) {
-                                document.body.removeChild(clone);
-                            }
+                            if (document.body.contains(clone)) document.body.removeChild(clone);
                             cardDiv.style.opacity = '1';
                         }, 250);
                     }
@@ -494,9 +642,7 @@ function renderHand() {
                 window.addEventListener('mouseup', onMouseUp);
             };
 
-            cardDiv.onclick = () => {
-                playSelectedCard(card, index);
-            };
+            cardDiv.onclick = () => { playSelectedCard(card, index); };
         }
 
         handDiv.appendChild(cardDiv);
@@ -508,7 +654,7 @@ function renderHand() {
 unoBtn.onclick = () => {
     hasDeclaredUnoThisTurn = true;
     unoBtn.disabled = true;
-    unoBtn.innerText = "✔ 宣言済み！";
+    unoBtn.innerText = t('declaredBadge');
     socket.emit('callUno', { roomId: currentRoomId });
 };
 
@@ -535,7 +681,7 @@ function openSwapPlayerModal() {
             btn.style.padding = '10px 20px';
             btn.style.fontSize = '15px';
             btn.style.backgroundColor = '#3498db';
-            btn.innerText = `${p.name} (手札: ${p.handCount}枚)`;
+            btn.innerText = currentLang === 'en' ? `${p.name} (Hand: ${p.handCount})` : `${p.name} (手札: ${p.handCount}枚)`;
             btn.onclick = () => {
                 selectedSwapTargetId = p.id;
                 swapPlayerModal.style.display = 'none';
@@ -590,7 +736,5 @@ socket.on('gameOver', (message) => {
 
 const restartBtn = document.getElementById('restart-btn');
 if (restartBtn) {
-    restartBtn.addEventListener('click', () => {
-        location.reload();
-    });
+    restartBtn.addEventListener('click', () => { location.reload(); });
 }
