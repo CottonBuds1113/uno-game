@@ -33,6 +33,7 @@ const translations = {
         soundLabel: "🔊 サウンド効果 (SE)",
         langLabel: "🌐 言語 / Language",
         closeBtn: "閉じる",
+        cancelBtn: "キャンセル",
         manualModalTitle: "📖 ゲームマニュアル",
         creditsModalTitle: "ℹ️ クレジット",
         creditsBody: "<strong>UNO Online Multiplayer</strong><br>Powered by Node.js, Express & Socket.IO<br>UI / Visual Effects: Custom Dark-Wood & Bloom CSS",
@@ -89,6 +90,7 @@ const translations = {
         soundLabel: "🔊 Sound Effects (SE)",
         langLabel: "🌐 Language",
         closeBtn: "Close",
+        cancelBtn: "Cancel",
         manualModalTitle: "📖 Game Manual",
         creditsModalTitle: "ℹ️ Credits",
         creditsBody: "<strong>UNO Online Multiplayer</strong><br>Powered by Node.js, Express & Socket.IO<br>UI / Visual Effects: Custom Dark-Wood & Bloom CSS",
@@ -157,6 +159,8 @@ window.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
+
+const socket = io();
 
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
@@ -572,7 +576,6 @@ function renderHand() {
         if (!isPlayable) {
             cardDiv.classList.add('disabled');
         } else {
-            // ▼ カードを高速でカーソルに吸い付かせてドラッグする処理
             cardDiv.onmousedown = (e) => {
                 e.preventDefault();
                 const rect = cardDiv.getBoundingClientRect();
@@ -709,6 +712,21 @@ window.selectWildColor = function(color) {
         });
         pendingWildCardIndex = null;
     }
+};
+
+// ▼ ワイルドカード（色選択）のキャンセル処理
+window.cancelWildColor = function() {
+    colorPickerModal.style.display = 'none';
+    pendingWildCardIndex = null;
+    pendingSwapCardIndex = null;
+    selectedSwapTargetId = null;
+};
+
+// ▼ 手札交換モーダルのキャンセル処理
+window.cancelSwapModal = function() {
+    swapPlayerModal.style.display = 'none';
+    pendingSwapCardIndex = null;
+    selectedSwapTargetId = null;
 };
 
 drawBtn.onclick = () => {

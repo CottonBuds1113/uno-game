@@ -101,10 +101,13 @@
     <div id="color-picker-modal">
         <div class="color-picker-content">
             <p data-i18n="colorPickerPrompt">変更する色を選んでください</p>
-            <button class="color-btn red" onclick="selectWildColor('red')"></button>
-            <button class="color-btn blue" onclick="selectWildColor('blue')"></button>
-            <button class="color-btn green" onclick="selectWildColor('green')"></button>
-            <button class="color-btn yellow" onclick="selectWildColor('yellow')"></button>
+            <div style="margin-bottom: 10px;">
+                <button class="color-btn red" onclick="selectWildColor('red')"></button>
+                <button class="color-btn blue" onclick="selectWildColor('blue')"></button>
+                <button class="color-btn green" onclick="selectWildColor('green')"></button>
+                <button class="color-btn yellow" onclick="selectWildColor('yellow')"></button>
+            </div>
+            <button class="primary-btn danger-cancel-btn" data-i18n="cancelBtn" onclick="cancelWildColor()" style="background-color: #c0392b; font-size: 14px; padding: 8px 16px;">キャンセル</button>
         </div>
     </div>
 
@@ -113,6 +116,7 @@
         <div class="color-picker-content">
             <p data-i18n="swapPrompt">手札を交換する相手を選んでください</p>
             <div id="swap-player-buttons" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;"></div>
+            <button class="primary-btn danger-cancel-btn" data-i18n="cancelBtn" onclick="cancelSwapModal()" style="background-color: #c0392b; font-size: 14px; padding: 8px 16px; margin-top: 15px; width: 100%;">キャンセル</button>
         </div>
     </div>
 
