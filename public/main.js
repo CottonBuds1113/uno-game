@@ -584,11 +584,11 @@ function updateMultiPlayControls() {
     const playBtn = document.getElementById('play-selected-btn');
     if (!controls || !playBtn) return;
 
-    if (selectedCardIndices.length > 0) {
-        controls.style.display = 'flex';
+if (selectedCardIndices.length > 0) {
+        controls.classList.add('active'); // クラスをつけて表示
         playBtn.innerText = t('playSelectedCountBtn', selectedCardIndices.length);
     } else {
-        controls.style.display = 'none';
+        controls.classList.remove('active'); // クラスを外して非表示（スペースは維持）
     }
 }
 

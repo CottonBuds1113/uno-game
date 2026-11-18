@@ -10,24 +10,6 @@ body {
     margin: 0;
     padding: 20px;
     padding-top: 74px;
-    user-select: none;
-    transition: filter 0.15s ease;
-
-    animation: simpleBgfade 0.85s cubic-bezier(0.05, 0.9, 0.1, 1) forwards;
-    touch-action: manipulation;
-
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-}
-
-@keyframes simpleBgfade {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
 }
 
 /* ====================================
@@ -290,6 +272,27 @@ button:disabled {
     margin-bottom: 15px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     min-height: 420px;
+}
+
+#multi-play-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 5px;
+    
+    /* ▼ スペースを確保したまま見えなくする設定 */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+/* 選択されているときだけ表示するクラス */
+#multi-play-controls.active {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 #discard-area {
