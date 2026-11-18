@@ -277,12 +277,14 @@ window.addEventListener('DOMContentLoaded', () => {
                 readyScreen.classList.add('hidden');
             }
 
-            // 2. ロビー画面とスポットライトの隠しを解除して、ここで初めてアニメーションを開始させる
+            // 2. ロビー、スポットライト、そして上部メニューバーの隠しを同時に解除して登場させる
             const lobbyScreen = document.getElementById('lobby-screen');
             const spotlight = document.getElementById('lobby-spotlight');
+            const topMenu = document.getElementById('top-menu-bar'); // 追加
             
             if (lobbyScreen) lobbyScreen.classList.remove('lobby-hidden');
             if (spotlight) spotlight.classList.remove('lobby-hidden');
+            if (topMenu) topMenu.classList.remove('lobby-hidden'); // 追加
         };
     }
 });

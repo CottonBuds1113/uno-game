@@ -23,17 +23,28 @@ body {
     left: 0;
     width: 100%;
     height: 46px;
-    background-color: rgba(10, 10, 10, 0.72);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(13, 15, 24, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.25);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
     z-index: 4000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    
+    /* ▼ 追加：上からスライドインするための動き（ロビー画面の速度と合わせる） */
+    transition: transform 0.85s cubic-bezier(0.05, 0.9, 0.1, 1), opacity 0.85s ease;
+}
+
+/* ▼ 追加：隠れているときは上に引っ込んでおく */
+#top-menu-bar.lobby-hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .menu-brand {
