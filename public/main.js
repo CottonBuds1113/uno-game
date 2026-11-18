@@ -271,10 +271,18 @@ window.addEventListener('DOMContentLoaded', () => {
     const enterLobbyBtn = document.getElementById('enter-lobby-btn');
     if (enterLobbyBtn) {
         enterLobbyBtn.onclick = () => {
+            // 1. 準備完了画面を消す
             const readyScreen = document.getElementById('ready-screen');
             if (readyScreen) {
-                readyScreen.classList.add('hidden'); // OK画面を消してロビー画面へ
+                readyScreen.classList.add('hidden');
             }
+
+            // 2. ロビー画面とスポットライトの隠しを解除して、ここで初めてアニメーションを開始させる
+            const lobbyScreen = document.getElementById('lobby-screen');
+            const spotlight = document.getElementById('lobby-spotlight');
+            
+            if (lobbyScreen) lobbyScreen.classList.remove('lobby-hidden');
+            if (spotlight) spotlight.classList.remove('lobby-hidden');
         };
     }
 });

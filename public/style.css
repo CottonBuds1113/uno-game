@@ -1108,3 +1108,11 @@ button:disabled {
     border-color: #38bdf8;
     transform: translateY(-1px);
 }
+
+/* ▼ OKボタンが押されるまでロビーや演出を完全に隠すクラス */
+.lobby-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    animation: none !important;
+}
