@@ -1153,26 +1153,36 @@ button:disabled {
 }
 
 /* ====================================
-   手札内での重ね合わせ・ずらしビジュアル（完全版）
+   手札内での重ね合わせ・ずらしビジュアル（束・スタック構造）
 ==================================== */
 
-/* 選択されたカード全体のベース */
-#hand .card.selected-stack {
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
+/* 手札コンテナを基準位置とする */
+#hand {
+    position: relative;
 }
 
-/* 1枚目（基準となるカード） */
+/* 選択されていない通常のカード */
+#hand .card {
+    position: relative;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+/* 1枚目（基準となるカード）：少し上に浮き上がり、最下層の基準になる */
 #hand .card.selected-stack:not(.stacked-offset) {
     transform: translateY(-22px) scale(1.02) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
     z-index: 20 !important;
-    opacity: 1 !important; /* 非半透明化 */
+    opacity: 1 !important;
 }
 
-/* 2枚目以降（重ねられたカード：レイヤー的に上 ＆ 右へズレる ＆ 非半透明化） */
+/* 2枚目以降：1枚目の位置（基準地）へ引き寄せられ、そこから右へ順番に重なる */
 #hand .card.selected-stack.stacked-offset {
-    transform: translateY(-22px) translateX(calc(var(--stack-order, 1) * 24px)) scale(1.02) !important;
-    /* レイヤー的に上に重ねるため、インデックスに応じてz-indexを高くする */
+    /* 元の横並びのレイアウト位置から、「1枚目の位置との差分」を打ち消しつつ、右へ綺麗に束ねる */
+    transform: translate(var(--offset-x, 0px), -22px) scale(1.02) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
+    /* 選択された順番（stack-order）が後になるほどレイヤー的に上へ */
     z-index: calc(30 + var(--stack-order, 1)) !important;
-    opacity: 1 !important; /* 非半透明化して見やすくする */
+    opacity: 1 !important;
 }
