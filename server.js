@@ -46,7 +46,7 @@ function createDeck(allowSwapCard = true) {
 
 const rooms = {};
 
-function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true, allowSpectator = true) {
+function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true, allowSpectator = true, isSameCardStackEnabled = true) {
     if (!rooms[roomId]) {
         const deck = createDeck(allowSwapCard);
         let topCard = deck.pop();
@@ -65,7 +65,8 @@ function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true, al
             pendingDrawCount: 0,
             isStackEnabled: isStackEnabled,
             allowSwapCard: allowSwapCard,
-            allowSpectator: allowSpectator
+            allowSpectator: allowSpectator,
+            isSameCardStackEnabled: isSameCardStackEnabled
         };
     }
     return rooms[roomId];
@@ -94,7 +95,8 @@ function updateGameState(roomId) {
         })),
         topCard: room.discardPile[room.discardPile.length - 1],
         currentTurnId: room.players[room.turn] ? room.players[room.turn].id : null,
-        pendingDrawCount: room.pendingDrawCount
+        pendingDrawCount: room.pendingDrawCount,
+        isSameCardStackEnabled: room.isSameCardStackEnabled
     });
 
     room.players.forEach(p => {
@@ -109,11 +111,11 @@ function updateGameState(roomId) {
 io.on('connection', (socket) => {
     let playerRoomId = null;
 
-    socket.on('joinRoom', ({ roomId, name, isStackEnabled, allowSwapCard, allowSpectator }) => {
+    socket.on('joinRoom', ({ roomId, name, isStackEnabled, allowSwapCard, allowSpectator, isSameCardStackEnabled }) => {
         playerRoomId = roomId;
         socket.join(roomId);
 
-        const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard, allowSpectator);
+        const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard, allowSpectator, isSameCardStackEnabled);
         room.allowSpectator = allowSpectator;
 
         if (room.players.length > 0 && room.allowSpectator) {
@@ -177,108 +179,139 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('playCard', ({ roomId, cardIndex, chosenColor, targetPlayerId }) => {
+    // ▼ 【新規対応】 複数枚同時出し（playCards）の処理
+    socket.on('playCards', ({ roomId, cardIndices, chosenColor, targetPlayerId }) => {
         const room = rooms[roomId];
         if (!room || room.players.length === 0) return;
         if (!room.players[room.turn] || room.players[room.turn].id !== socket.id) return;
+        if (!cardIndices || cardIndices.length === 0) return;
 
         const player = room.players[room.turn];
-        if (cardIndex < 0 || cardIndex >= player.hand.length) return;
 
-        const card = player.hand[cardIndex];
+        // インデックスの妥当性＆重複チェック
+        const sortedIndices = [...cardIndices].sort((a, b) => b - a); // 降順にして後ろから安全にスプライスする
+        for (let idx of sortedIndices) {
+            if (idx < 0 || idx >= player.hand.length) return;
+        }
+
+        // 選択されたカードオブジェクトの抽出
+        const cardsToPlay = sortedIndices.map(idx => player.hand[idx]);
         const topCard = room.discardPile[room.discardPile.length - 1];
+
+        // 1枚目のカードが場に出せるか判定
+        const firstCard = cardsToPlay[cardsToPlay.length - 1]; // 元のインデックス順の先頭
 
         if (room.isStackEnabled && room.pendingDrawCount > 0) {
             if (topCard.value === 'draw2') {
-                const isCanStack = (card.value === 'draw2' || card.value === 'wild_draw4');
+                const isCanStack = (firstCard.value === 'draw2' || firstCard.value === 'wild_draw4');
                 if (!isCanStack) return;
             } else if (topCard.value === 'wild_draw4') {
-                const isCanStack = (card.value === 'wild_draw4');
+                const isCanStack = (firstCard.value === 'wild_draw4');
                 if (!isCanStack) return;
             }
         }
 
         let isPlayable = false;
-        if (card.color === 'wild') {
+        if (firstCard.color === 'wild') {
             isPlayable = true;
         } else if (topCard.color === 'wild') {
-            isPlayable = (card.color === topCard.designatedColor);
+            isPlayable = (firstCard.color === topCard.designatedColor);
         } else {
-            const isSameColor = card.color === topCard.color;
-            const isSameValue = (card.value === topCard.value);
+            const isSameColor = firstCard.color === topCard.color;
+            const isSameValue = (firstCard.value === topCard.value);
             isPlayable = isSameColor || isSameValue;
         }
 
-        if (isPlayable) {
-            let playedCard = player.hand.splice(cardIndex, 1)[0];
+        if (!isPlayable) return;
 
-            if (playedCard.color === 'wild') {
-                playedCard.designatedColor = chosenColor || 'red';
+        // 2枚目以降がすべて「同じ数字・記号」かチェック（重ね出しルール有効時）
+        if (cardsToPlay.length > 1) {
+            if (!room.isSameCardStackEnabled) return;
+            const baseVal = firstCard.value;
+            for (let c of cardsToPlay) {
+                if (c.value !== baseVal) return;
             }
-
-            if (playedCard.value === 'swap' && targetPlayerId) {
-                const targetPlayer = room.players.find(p => p.id === targetPlayerId);
-                if (targetPlayer) {
-                    const tempHand = player.hand;
-                    player.hand = targetPlayer.hand;
-                    targetPlayer.hand = tempHand;
-                    io.to(roomId).emit('announce', `🔄 ${player.name} が ${targetPlayer.name} と手札を交換しました！`);
-                }
-            }
-
-            room.discardPile.push(playedCard);
-
-            if (player.hand.length > 1) {
-                player.hasCalledUno = false;
-            }
-
-            if (player.hand.length === 0) {
-                io.to(roomId).emit('gameOver', `${player.name} の勝利です！`);
-                delete rooms[roomId];
-                return;
-            }
-
-            let skipNext = false;
-            if (playedCard.type === 'action' || playedCard.color === 'wild') {
-                if (playedCard.value === 'skip') {
-                    skipNext = true;
-                } else if (playedCard.value === 'reverse') {
-                    room.direction *= -1;
-                    if (room.players.length === 2) skipNext = true;
-                } else if (playedCard.value === 'draw2') {
-                    if (room.isStackEnabled) {
-                        room.pendingDrawCount += 2;
-                    } else {
-                        const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
-                        const nextPlayer = room.players[nextTurnIndex];
-                        for (let i = 0; i < 2; i++) {
-                            if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
-                            nextPlayer.hand.push(room.deck.pop());
-                        }
-                        nextPlayer.hasCalledUno = false;
-                        skipNext = true;
-                    }
-                } else if (playedCard.value === 'wild_draw4') {
-                    if (room.isStackEnabled) {
-                        room.pendingDrawCount += 4;
-                    } else {
-                        const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
-                        const nextPlayer = room.players[nextTurnIndex];
-                        for (let i = 0; i < 4; i++) {
-                            if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
-                            nextPlayer.hand.push(room.deck.pop());
-                        }
-                        nextPlayer.hasCalledUno = false;
-                        skipNext = true;
-                    }
-                }
-            }
-
-            room.turn += room.direction;
-            if (skipNext) room.turn += room.direction;
-
-            updateGameState(roomId);
         }
+
+        // 手札からカードを削除して場に出す
+        let playedCards = [];
+        for (let idx of sortedIndices) {
+            playedCards.unshift(player.hand.splice(idx, 1)[0]);
+        }
+
+        // 最後のカード（またはワイルド）に対して指定色や特殊効果を適用
+        const lastPlayedCard = playedCards[playedCards.length - 1];
+        if (lastPlayedCard.color === 'wild') {
+            lastPlayedCard.designatedColor = chosenColor || 'red';
+        }
+
+        // スワップカードが含まれていた場合（先頭のカードがスワップの場合など）
+        if (lastPlayedCard.value === 'swap' && targetPlayerId) {
+            const targetPlayer = room.players.find(p => p.id === targetPlayerId);
+            if (targetPlayer) {
+                const tempHand = player.hand;
+                player.hand = targetPlayer.hand;
+                targetPlayer.hand = tempHand;
+                io.to(roomId).emit('announce', `🔄 ${player.name} が ${targetPlayer.name} と手札を交換しました！`);
+            }
+        }
+
+        // 捨札の山に追加
+        room.discardPile.push(...playedCards);
+
+        if (player.hand.length > 1) {
+            player.hasCalledUno = false;
+        }
+
+        if (player.hand.length === 0) {
+            io.to(roomId).emit('gameOver', `${player.name} の勝利です！`);
+            delete rooms[roomId];
+            return;
+        }
+
+        // 特殊効果の重ねがけ処理
+        let skipCount = 0;
+        let totalDraw2 = 0;
+        let totalDraw4 = 0;
+
+        playedCards.forEach(c => {
+            if (c.value === 'skip') {
+                skipCount += 1;
+            } else if (c.value === 'reverse') {
+                room.direction *= -1;
+                if (room.players.length === 2) skipCount += 1;
+            } else if (c.value === 'draw2') {
+                if (room.isStackEnabled) {
+                    room.pendingDrawCount += 2;
+                } else {
+                    totalDraw2 += 2;
+                }
+            } else if (c.value === 'wild_draw4') {
+                if (room.isStackEnabled) {
+                    room.pendingDrawCount += 4;
+                } else {
+                    totalDraw4 += 4;
+                }
+            }
+        });
+
+        // スタックOFF時のドロー処理（合算枚数分を次プレイヤーに引かせる）
+        if (!room.isStackEnabled && (totalDraw2 > 0 || totalDraw4 > 0)) {
+            const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
+            const nextPlayer = room.players[nextTurnIndex];
+            const drawTotal = totalDraw2 + totalDraw4;
+            for (let i = 0; i < drawTotal; i++) {
+                if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
+                nextPlayer.hand.push(room.deck.pop());
+            }
+            nextPlayer.hasCalledUno = false;
+            skipCount += 1;
+        }
+
+        // ターン進行 ＋ スキップ回数分の加算
+        room.turn += room.direction * (1 + skipCount);
+
+        updateGameState(roomId);
     });
 
     socket.on('drawCard', ({ roomId }) => {
