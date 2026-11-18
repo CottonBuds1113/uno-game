@@ -578,17 +578,17 @@ socket.on('announce', (msg) => {
     turnInfo.style.color = "#f1c40f";
 });
 
-// ▼ 重ね出しコントロールバーの表示更新
+// ▼ 重ね出しコントロールバーの表示更新（スペースを維持したままactiveクラスで切り替え）
 function updateMultiPlayControls() {
     const controls = document.getElementById('multi-play-controls');
     const playBtn = document.getElementById('play-selected-btn');
     if (!controls || !playBtn) return;
 
-if (selectedCardIndices.length > 0) {
-        controls.classList.add('active'); // クラスをつけて表示
+    if (selectedCardIndices.length > 0) {
+        controls.classList.add('active');
         playBtn.innerText = t('playSelectedCountBtn', selectedCardIndices.length);
     } else {
-        controls.classList.remove('active'); // クラスを外して非表示（スペースは維持）
+        controls.classList.remove('active');
     }
 }
 
@@ -649,6 +649,7 @@ function renderHand() {
 
     const firstSelectedCard = selectedCardIndices.length > 0 ? myCurrentHand[selectedCardIndices[0]] : null;
 
+    // 1. まず手札のカード要素をすべて生成して配置
     myCurrentHand.forEach((card, index) => {
         const cardDiv = createCardElement(card);
         const selectionOrder = selectedCardIndices.indexOf(index);
@@ -656,21 +657,6 @@ function renderHand() {
 
         if (isNewCardDrawn && index === myCurrentHand.length - 1) {
             cardDiv.classList.add('card-draw-anim');
-        }
-
-        if (isSelected) {
-            cardDiv.classList.add('selected-stack');
-            // CSS変数に何番目に選ばれたかを渡して、ズレ幅を綺麗に計算させる
-            cardDiv.style.setProperty('--stack-order', selectionOrder);
-
-            if (selectionOrder > 0) {
-                cardDiv.classList.add('stacked-offset');
-            }
-
-            const badge = document.createElement('div');
-            badge.className = 'stack-order-badge';
-            badge.innerText = selectionOrder + 1;
-            cardDiv.appendChild(badge);
         }
 
         let isPlayable = false;
@@ -702,22 +688,18 @@ function renderHand() {
             }
         }
 
-        // ▼【クリック操作のルール】
-        // 既にカードが選択されており、かつ「まだ選ばれていないが、同じ数字・記号のカード」である場合、
-        // クリックしたときに選択状態になり、1枚目の上に重なって右にズレ、非半透明化する。
         const canBeClickedToStack = selectedCardIndices.length > 0 && !isSelected && isSameCardStackEnabledRoom && (card.value === firstSelectedCard.value);
 
         if (!isPlayable && !canBeClickedToStack) {
             cardDiv.classList.add('disabled');
         } else {
-            // ドラッグ＆ドロップ操作のロジック
-            cardDiv.onmousedown = (e) => {
-                e.preventDefault();
-                const startX = e.clientX;
-                const startY = e.clientY;
+            // ▼ マウス＆スマホタッチ対応の共通ドラッグ関数
+            const startDragOrTouch = (clientX, clientY) => {
+                const startX = clientX;
+                const startY = clientY;
                 const rect = cardDiv.getBoundingClientRect();
-                const offsetX = e.clientX - rect.left;
-                const offsetY = e.clientY - rect.top;
+                const offsetX = clientX - rect.left;
+                const offsetY = clientY - rect.top;
 
                 const targetIndices = isSelected ? [...selectedCardIndices] : [index];
 
@@ -744,37 +726,36 @@ function renderHand() {
                 let hasMoved = false;
                 const discardArea = document.getElementById('discard-area');
 
-                function onMouseMove(moveEvent) {
-                    const dx = Math.abs(moveEvent.clientX - startX);
-                    const dy = Math.abs(moveEvent.clientY - startY);
+                function onMove(moveX, moveY) {
+                    const dx = Math.abs(moveX - startX);
+                    const dy = Math.abs(moveY - startY);
                     if (dx > 5 || dy > 5) hasMoved = true;
 
-                    clone.style.left = `${moveEvent.clientX - offsetX}px`;
-                    clone.style.top = `${moveEvent.clientY - offsetY}px`;
+                    clone.style.left = `${moveX - offsetX}px`;
+                    clone.style.top = `${moveY - offsetY}px`;
                     clone.style.transform = `scale(1.12)`;
 
-                    // 場のカードエリアへのホバー判定
                     if (discardArea) {
                         const dropRect = discardArea.getBoundingClientRect();
                         const isInsideNow = (
-                            moveEvent.clientX >= dropRect.left &&
-                            moveEvent.clientX <= dropRect.right &&
-                            moveEvent.clientY >= dropRect.top &&
-                            moveEvent.clientY <= dropRect.bottom
+                            moveX >= dropRect.left &&
+                            moveX <= dropRect.right &&
+                            moveY >= dropRect.top &&
+                            moveY <= dropRect.bottom
                         );
                         discardArea.classList.toggle('drag-over', isInsideNow);
                     }
 
-                    // ▼【ドラッグ中】他の手札カードの上に触れさせたとき、重ねられるカードを光らせる（わかりやすくする）
+                    // 他の手札カードに触れたときのハイライト
                     const handCards = handDiv.querySelectorAll('.card');
                     handCards.forEach((cEl, cIdx) => {
                         if (cIdx !== index) {
                             const cRect = cEl.getBoundingClientRect();
                             const isOverCard = (
-                                moveEvent.clientX >= cRect.left &&
-                                moveEvent.clientX <= cRect.right &&
-                                moveEvent.clientY >= cRect.top &&
-                                moveEvent.clientY <= cRect.bottom
+                                moveX >= cRect.left &&
+                                moveX <= cRect.right &&
+                                moveY >= cRect.top &&
+                                moveY <= cRect.bottom
                             );
                             if (isOverCard && isSameCardStackEnabledRoom && myCurrentHand[cIdx].value === card.value) {
                                 cEl.style.boxShadow = '0 0 15px #38bdf8';
@@ -787,12 +768,14 @@ function renderHand() {
                     });
                 }
 
-                function onMouseUp(upEvent) {
+                function onEnd(endX, endY) {
                     window.removeEventListener('mousemove', onMouseMove);
                     window.removeEventListener('mouseup', onMouseUp);
+                    window.removeEventListener('touchmove', onTouchMove);
+                    window.removeEventListener('touchend', onTouchEnd);
+
                     if (discardArea) discardArea.classList.remove('drag-over');
 
-                    // 手札のハイライトをリセット
                     handDiv.querySelectorAll('.card').forEach(cEl => {
                         cEl.style.boxShadow = '';
                         cEl.style.borderColor = '';
@@ -800,23 +783,22 @@ function renderHand() {
 
                     const dropRect = discardArea.getBoundingClientRect();
                     const isInsideDiscard = (
-                        upEvent.clientX >= dropRect.left &&
-                        upEvent.clientX <= dropRect.right &&
-                        upEvent.clientY >= dropRect.top &&
-                        upEvent.clientY <= dropRect.bottom
+                        endX >= dropRect.left &&
+                        endX <= dropRect.right &&
+                        endY >= dropRect.top &&
+                        endY <= dropRect.bottom
                     );
 
-                    // ▼【ドロップ判定 1】手札の別のカードの上にドロップされた場合 ＝ グループ化して重ねる
                     let targetCardIndex = -1;
                     const handCards = handDiv.querySelectorAll('.card');
                     handCards.forEach((cEl, cIdx) => {
                         if (cIdx !== index) {
                             const cRect = cEl.getBoundingClientRect();
                             if (
-                                upEvent.clientX >= cRect.left &&
-                                upEvent.clientX <= cRect.right &&
-                                upEvent.clientY >= cRect.top &&
-                                upEvent.clientY <= cRect.bottom
+                                endX >= cRect.left &&
+                                endX <= cRect.right &&
+                                endY >= cRect.top &&
+                                endY <= cRect.bottom
                             ) {
                                 targetCardIndex = cIdx;
                             }
@@ -835,7 +817,6 @@ function renderHand() {
 
                         const targetCard = myCurrentHand[targetCardIndex];
                         if (targetCard.value === card.value) {
-                            // ドラッグしたカード、または選択中の束を、ターゲットのカードの上に重ねる
                             if (!selectedCardIndices.includes(targetCardIndex)) {
                                 selectedCardIndices.push(targetCardIndex);
                             }
@@ -862,11 +843,38 @@ function renderHand() {
                     }
                 }
 
+                const onMouseMove = (e) => onMove(e.clientX, e.clientY);
+                const onMouseUp = (e) => onEnd(e.clientX, e.clientY);
+                const onTouchMove = (e) => {
+                    if (e.touches.length > 0) {
+                        e.preventDefault();
+                        onMove(e.touches[0].clientX, e.touches[0].clientY);
+                    }
+                };
+                const onTouchEnd = (e) => {
+                    if (e.changedTouches.length > 0) {
+                        onEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                    }
+                };
+
                 window.addEventListener('mousemove', onMouseMove);
                 window.addEventListener('mouseup', onMouseUp);
+                window.addEventListener('touchmove', onTouchMove, { passive: false });
+                window.addEventListener('touchend', onTouchEnd);
             };
 
-            // ▼【クリック操作のロジック】
+            cardDiv.onmousedown = (e) => {
+                e.preventDefault();
+                startDragOrTouch(e.clientX, e.clientY);
+            };
+
+            cardDiv.ontouchstart = (e) => {
+                if (e.touches.length > 0) {
+                    startDragOrTouch(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            };
+
+            // クリック操作
             cardDiv.onclick = () => {
                 if (!isSameCardStackEnabledRoom) {
                     executePlayCards([index]);
@@ -874,33 +882,56 @@ function renderHand() {
                 }
 
                 if (isSelected) {
-                    // すでに選択されているものをクリックしたら選択解除
                     selectedCardIndices = selectedCardIndices.filter(i => i !== index);
                 } else {
-                    // 新たにクリックされた場合、選択状態にしてグループに追加
                     selectedCardIndices.push(index);
                 }
                 renderHand();
             };
         }
 
-        // 描画時に選ばれているカードならクラスを付与
-        if (isSelected) {
-            cardDiv.classList.add('selected-stack');
-            if (selectionOrder > 0) {
-                cardDiv.classList.add('stacked-offset');
-                // 何番目に重ねられたかをCSS変数にセット（ズレ幅とz-indexのレイヤー制御に使用）
-                cardDiv.style.setProperty('--stack-order', selectionOrder);
-            }
-
-            const badge = document.createElement('div');
-            badge.className = 'stack-order-badge';
-            badge.innerText = selectionOrder + 1;
-            cardDiv.appendChild(badge);
-        }
-
         handDiv.appendChild(cardDiv);
     });
+
+    // 2. 【精密位置合わせ】：1枚目の位置へスライドし、右へ綺麗に重ねる束（スタック）を形成
+    if (selectedCardIndices.length > 0) {
+        const cardElements = handDiv.querySelectorAll('.card');
+        const firstIdx = selectedCardIndices[0];
+        const firstCardEl = cardElements[firstIdx];
+
+        if (firstCardEl) {
+            firstCardEl.classList.add('selected-stack');
+            firstCardEl.style.zIndex = '20';
+            firstCardEl.style.opacity = '1';
+            
+            const badge1 = document.createElement('div');
+            badge1.className = 'stack-order-badge';
+            badge1.innerText = '1';
+            firstCardEl.appendChild(badge1);
+
+            const firstRect = firstCardEl.getBoundingClientRect();
+
+            selectedCardIndices.forEach((sIdx, order) => {
+                if (order > 0) {
+                    const targetEl = cardElements[sIdx];
+                    if (targetEl) {
+                        const targetRect = targetEl.getBoundingClientRect();
+                        const diffX = (firstRect.left - targetRect.left) + (order * 24);
+                        
+                        targetEl.classList.add('selected-stack', 'stacked-offset');
+                        targetEl.style.transform = `translate(${diffX}px, -22px) scale(1.02)`;
+                        targetEl.style.zIndex = `${30 + order}`;
+                        targetEl.style.opacity = '1';
+
+                        const badge = document.createElement('div');
+                        badge.className = 'stack-order-badge';
+                        badge.innerText = order + 1;
+                        targetEl.appendChild(badge);
+                    }
+                }
+            });
+        }
+    }
 
     previousHandLength = myCurrentHand.length;
 }
