@@ -106,21 +106,23 @@
                 <div id="top-card" class="card">?</div>
             </div>
 
-            <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; align-items: center;">
-                <button id="draw-btn" data-i18n="drawBtn">山札から引く</button>
-                <button id="uno-btn" class="uno-call-btn" style="display: none;" disabled>🔥 UNO!</button>
+            <!-- ▼ ここに「山札から引く」「UNO!」とあわせて、複数枚出し用のコントロールをまとめる -->
+            <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
+                    <button id="draw-btn" data-i18n="drawBtn">山札から引く</button>
+                    <button id="uno-btn" class="uno-call-btn" style="display: none;" disabled>🔥 UNO!</button>
+                </div>
+
+                <!-- ▼ 移動：選択中だけ現れるコントロールバー -->
+                <div id="multi-play-controls" style="display: none; gap: 8px; justify-content: center; align-items: center; margin-top: 5px;">
+                    <button id="play-selected-btn" class="primary-btn" style="background-color: #2ecc71; color: #000; font-size: 14px; padding: 10px 16px;">選択したカードを場に出す (0枚)</button>
+                    <button id="clear-selection-btn" class="primary-btn" style="background-color: #e74c3c; font-size: 12px; padding: 8px 12px;" data-i18n="clearSelectionBtn">選択解除</button>
+                </div>
             </div>
         </div>
 
         <h3 data-i18n="myHandHeading">あなたの手札</h3>
-
-        <div id="multi-play-controls" style="display: none; margin-bottom: 12px; gap: 10px; justify-content: center; align-items: center;">
-            <button id="play-selected-btn" class="primary-btn" style="background-color: #2ecc71; color: #000;">選択したカードを場に出す (0枚)</button>
-            <button id="clear-selection-btn" class="primary-btn" style="background-color: #e74c3c; font-size: 13px; padding: 8px 14px;" data-i18n="clearSelectionBtn">選択解除</button>
-        </div>
-
         <div id="hand"></div>
-    </div>
 
     <!-- ワイルドカード用の色選択モーダル -->
     <div id="color-picker-modal">
