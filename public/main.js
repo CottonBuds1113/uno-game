@@ -57,6 +57,7 @@ const translations = {
         readyTitle: "準備完了",
         readyDesc: "サーバーの接続が完了しました。<br>ボタンを押してゲームへ進んでください。",
         enterLobbyBtn: "OK (ロビーへ入る)",
+        ruleSameCard: "同一カードの重ね出しルール（複数枚同時出し）",
 
         manualHtml: `
             <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
@@ -118,7 +119,8 @@ const translations = {
 
         readyTitle: "Ready",
         readyDesc: "Server connection established.<br>Click below to enter the lobby.",
-        enterLobbyBtn: "OK (Enter Lobby)",        
+        enterLobbyBtn: "OK (Enter Lobby)",
+        ruleSameCard: "Stack Same Cards Rule (Play Multiple Cards)",        
 
         manualHtml: `
             <li><strong>Basic Rules:</strong> Match the top card by color, number, or symbol.</li>
@@ -309,14 +311,25 @@ function joinRoom() {
     const stackCheckbox = document.getElementById('stack-rule-checkbox');
     const swapCheckbox = document.getElementById('swap-rule-checkbox');
     const spectatorCheckbox = document.getElementById('spectator-rule-checkbox');
+    const sameCardCheckbox = document.getElementById('stack-same-card-checkbox'); // ▼ 追加
     
     const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
     const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
     const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
+    const isSameCardStackEnabled = sameCardCheckbox ? sameCardCheckbox.checked : true; // ▼ 追加
 
     currentRoomId = roomId;
     showLoading(currentLang === 'en' ? 'Joining room...' : '卓を囲んでいます...');
-    socket.emit('joinRoom', { roomId, name, isStackEnabled, allowSwapCard, allowSpectator });
+    
+    // ▼ サーバーへ送るデータに `isSameCardStackEnabled` を追加
+    socket.emit('joinRoom', { 
+        roomId, 
+        name, 
+        isStackEnabled, 
+        allowSwapCard, 
+        allowSpectator, 
+        isSameCardStackEnabled 
+    });
 }
 
 socket.on('joinedRoom', (roomId) => {
