@@ -1131,12 +1131,6 @@ button:disabled {
 /* ====================================
    複数枚重ね出し（選択中）のカード演出
 ==================================== */
-#hand .card.selected-stack {
-    transform: translateY(-22px) scale(1.06) !important;
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 18px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    z-index: 10;
-}
 
 /* 選択中のカード束の順番バッジ（1枚目、2枚目...） */
 .stack-order-badge {
