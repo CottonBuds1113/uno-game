@@ -255,9 +255,8 @@ window.closeSysModal = function(modalId) {
 // ▼ サーバー接続時の処理（ロード画面を消して、OKボタン画面を出す）
 socket.on('connect', () => {
     myId = socket.id;
-    hideLoading(); // Renderのロード画面（または自前ローディング）を隠す
+    hideLoading();
     
-    // 準備完了画面を表示する
     const readyScreen = document.getElementById('ready-screen');
     if (readyScreen) {
         readyScreen.classList.remove('hidden');
@@ -266,30 +265,37 @@ socket.on('connect', () => {
 
 // ▼ 「OK（ゲーム画面へ進む）」ボタンを押したときの処理
 window.addEventListener('DOMContentLoaded', () => {
-    // （既存のDOMContentLoadedの中身のままでOKです。下部に以下を追加してください）
-    
     const enterLobbyBtn = document.getElementById('enter-lobby-btn');
     if (enterLobbyBtn) {
         enterLobbyBtn.onclick = () => {
-            // 1. 準備完了画面を消す
             const readyScreen = document.getElementById('ready-screen');
             if (readyScreen) {
                 readyScreen.classList.add('hidden');
             }
 
-            // 2. ロビー、スポットライト、そして上部メニューバーの隠しを同時に解除して登場させる
             const lobbyScreen = document.getElementById('lobby-screen');
             const spotlight = document.getElementById('lobby-spotlight');
-            const topMenu = document.getElementById('top-menu-bar'); // 追加
+            const topMenu = document.getElementById('top-menu-bar');
             
             if (lobbyScreen) lobbyScreen.classList.remove('lobby-hidden');
             if (spotlight) spotlight.classList.remove('lobby-hidden');
-            if (topMenu) topMenu.classList.remove('lobby-hidden'); // 追加
+            if (topMenu) topMenu.classList.remove('lobby-hidden');
         };
     }
 });
 
-joinRoomBtn.onclick = () => { joinRoom(); };
+// ▼ 【復活】「部屋を作る」ボタンの処理
+if (createRoomBtn) {
+    createRoomBtn.onclick = () => {
+        const randomRoom = Math.floor(1000 + Math.random() * 9000).toString();
+        roomIdInput.value = randomRoom;
+        joinRoom();
+    };
+}
+
+if (joinRoomBtn) {
+    joinRoomBtn.onclick = () => { joinRoom(); };
+}
 
 function joinRoom() {
     const roomId = roomIdInput.value.trim();
