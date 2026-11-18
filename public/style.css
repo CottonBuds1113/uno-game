@@ -1153,20 +1153,18 @@ button:disabled {
 }
 
 /* ====================================
-   手札内での重ね合わせ・ずらしビジュアル（改良版）
+   手札内での重ね合わせ・ずらしビジュアル（修正版）
 ==================================== */
 
 /* 選択されたカード全体のベース（少し上に浮き上がらせる） */
 #hand .card.selected-stack {
-    transform: translateY(-20px) scale(1.02) !important;
+    transform: translateY(-22px) scale(1.02) !important;
     border-color: #38bdf8 !important;
     box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    /* 選択された順番（selectionOrder）に応じて手前側に重なるよう動的制御 */
     z-index: calc(20 + var(--stack-order, 0)) !important;
 }
 
-/* 2枚目以降のカードを「右へ少しずつズラして」重ねる（ご提示いただいた理想の形） */
+/* 2枚目以降のカード：縦の高さは揃えつつ、右方向へキレイに横並びで重ねる */
 #hand .card.selected-stack.stacked-offset {
-    /* 選択された順番（1番目、2番目、3番目…）に応じて右に重なっていくようにオフセットを計算 */
-    transform: translate(calc(var(--stack-order, 0) * 22px), -20px) scale(1.02) !important;
+    transform: translateY(-22px) translateX(calc(var(--stack-order, 0) * 24px)) scale(1.02) !important;
 }
