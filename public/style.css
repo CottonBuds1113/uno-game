@@ -1129,30 +1129,6 @@ button:disabled {
 }
 
 /* ====================================
-   複数枚重ね出し（選択中）のカード演出
-==================================== */
-
-/* 選択中のカード束の順番バッジ（1枚目、2枚目...） */
-.stack-order-badge {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: linear-gradient(135deg, #7c3aed, #2563eb);
-    color: #ffffff;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
-    font-weight: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
-}
-
-/* ====================================
    手札内での重ね合わせ・ずらしビジュアル
 ==================================== */
 #hand .card.selected-stack {
