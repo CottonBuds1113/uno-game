@@ -1019,13 +1019,13 @@ button:disabled {
 }
 
 /* ====================================
-   サーバー準備完了・OKボタン画面
+   Renderターミナル風：準備完了・スタート画面
 ==================================== */
 .ready-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(8, 9, 15, 0.92);
-    backdrop-filter: blur(8px);
+    background-color: rgba(6, 7, 12, 0.95);
+    backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1041,59 +1041,70 @@ button:disabled {
 }
 
 .ready-card {
-    background: #21170a;
-    background-image: url('brown-bg.jpg');
-    background-size: cover;
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    border-radius: 16px;
-    padding: 35px 45px;
-    text-align: center;
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.7);
-    color: white;
-    max-width: 400px;
+    /* ターミナル風のダークウィンドウ */
+    background: #0d1117;
+    border: 1px solid rgba(56, 189, 248, 0.3); /* シアン/ブルー系のシャープな枠線 */
+    border-radius: 8px;
+    padding: 35px 40px;
+    text-align: left; /* ターミナルっぽく左寄せに */
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.2), 0 20px 40px rgba(0, 0, 0, 0.8);
+    color: #e2e8f0;
+    max-width: 440px;
     width: 90%;
-    transform: scale(0.9);
-    animation: readyCardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transform: scale(0.95);
+    animation: readyCardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    /* ターミナルらしい等幅フォントを適用 */
+    font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
 }
 
 @keyframes readyCardPop {
-    0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+    0% { transform: scale(0.9) translateY(15px); opacity: 0; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .ready-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
-    filter: drop-shadow(0 0 10px rgba(46, 204, 113, 0.8));
+    font-size: 22px;
+    margin-bottom: 16px;
+    color: #38bdf8;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
 }
 
 .ready-card h2 {
-    font-size: 24px;
-    margin: 0 0 12px 0;
-    letter-spacing: 2px;
-    color: #2ecc71;
+    font-size: 20px;
+    margin: 0 0 14px 0;
+    letter-spacing: 1px;
+    color: #38bdf8; /* ターミナルブルー */
+    font-weight: 700;
 }
 
 .ready-card p {
-    font-size: 14px;
-    color: #bdc3c7;
+    font-size: 13px;
+    color: #94a3b8;
     line-height: 1.6;
-    margin-bottom: 25px;
+    margin-bottom: 28px;
 }
 
 #enter-lobby-btn {
-    background-color: #2ecc71;
-    color: white;
+    /* パープルとブルーのグラデーション、コンソール風の角丸少なめ */
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    color: #ffffff;
     width: 100%;
-    padding: 14px;
-    font-size: 16px;
+    padding: 12px;
+    font-size: 14px;
     font-weight: bold;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+    font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
+    letter-spacing: 1px;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
     transition: all 0.2s ease;
 }
 
 #enter-lobby-btn:hover {
-    background-color: #27ae60;
-    transform: scale(1.02);
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
 }
