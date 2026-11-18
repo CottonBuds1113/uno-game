@@ -265,7 +265,7 @@ button:disabled {
     background-position: center;     
     background-repeat: no-repeat;    
     background-attachment: scroll;
-    padding: 20px;
+    padding: 20px 0 60px 0;
     border-radius: 12px;
     border: hsla(0, 0%, 100%, 0.800) solid 2px;
     display: inline-block;
