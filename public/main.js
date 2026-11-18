@@ -53,6 +53,11 @@ const translations = {
         penaltyNotice: (name) => `⚠️ ${name} はUNO宣言を忘れていたためペナルティ！(2枚ドロー)`,
         stackPenalty: (name, n) => `💥 ${name} は累積ペナルティで ${n}枚 引かされました！`,
         winnerMsg: (name) => `${name} の勝利です！`,
+
+        readyTitle: "準備完了",
+        readyDesc: "サーバーの接続が完了しました。<br>ボタンを押してゲームへ進んでください。",
+        enterLobbyBtn: "OK (ロビーへ入る)",
+
         manualHtml: `
             <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
             <li><strong>操作方法：</strong>出せるカードをドラッグ＆ドロップで場に出すか、タップ（クリック）で出せます。</li>
@@ -110,6 +115,11 @@ const translations = {
         penaltyNotice: (name) => `⚠️ ${name} forgot to call UNO and drew 2 penalty cards!`,
         stackPenalty: (name, n) => `💥 ${name} took ${n} cards from the accumulated penalty!`,
         winnerMsg: (name) => `${name} wins the game!`,
+
+        readyTitle: "Ready",
+        readyDesc: "Server connection established.<br>Click below to enter the lobby.",
+        enterLobbyBtn: "OK (Enter Lobby)",        
+
         manualHtml: `
             <li><strong>Basic Rules:</strong> Match the top card by color, number, or symbol.</li>
             <li><strong>Controls:</strong> Drag & drop or tap a playable card to play.</li>
@@ -242,13 +252,32 @@ window.closeSysModal = function(modalId) {
     if (modal) modal.style.display = 'none';
 };
 
-socket.on('connect', () => { myId = socket.id; });
+// ▼ サーバー接続時の処理（ロード画面を消して、OKボタン画面を出す）
+socket.on('connect', () => {
+    myId = socket.id;
+    hideLoading(); // Renderのロード画面（または自前ローディング）を隠す
+    
+    // 準備完了画面を表示する
+    const readyScreen = document.getElementById('ready-screen');
+    if (readyScreen) {
+        readyScreen.classList.remove('hidden');
+    }
+});
 
-createRoomBtn.onclick = () => {
-    const randomRoom = Math.floor(1000 + Math.random() * 9000).toString();
-    roomIdInput.value = randomRoom;
-    joinRoom();
-};
+// ▼ 「OK（ゲーム画面へ進む）」ボタンを押したときの処理
+window.addEventListener('DOMContentLoaded', () => {
+    // （既存のDOMContentLoadedの中身のままでOKです。下部に以下を追加してください）
+    
+    const enterLobbyBtn = document.getElementById('enter-lobby-btn');
+    if (enterLobbyBtn) {
+        enterLobbyBtn.onclick = () => {
+            const readyScreen = document.getElementById('ready-screen');
+            if (readyScreen) {
+                readyScreen.classList.add('hidden'); // OK画面を消してロビー画面へ
+            }
+        };
+    }
+});
 
 joinRoomBtn.onclick = () => { joinRoom(); };
 
