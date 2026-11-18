@@ -19,6 +19,7 @@ const translations = {
         ruleStack: "ドロー累積（+2/+4重ね）ルール",
         ruleSwap: "手札交換カード（スワップ）を含める",
         ruleSpectator: "観戦モード（オン）｜途中参加モード（オフ）",
+        ruleSameCard: "同一カードの重ね出しルール（複数枚同時出し）",
         createRoomBtn: "部屋を作る",
         joinRoomBtn: "部屋に参加",
         waitingText: "待機中...",
@@ -26,6 +27,8 @@ const translations = {
         discardLabel: "場のカード:",
         drawBtn: "山札から引く",
         myHandHeading: "あなたの手札",
+        clearSelectionBtn: "選択解除",
+        playSelectedCountBtn: (n) => `🚀 選んだ ${n}枚 を場に出す`,
         colorPickerPrompt: "変更する色を選んでください",
         swapPrompt: "手札を交換する相手を選んでください",
         settingsModalTitle: "⚙️ システム設定",
@@ -57,14 +60,13 @@ const translations = {
         readyTitle: "準備完了",
         readyDesc: "サーバーの接続が完了しました。<br>ボタンを押してゲームへ進んでください。",
         enterLobbyBtn: "OK (ロビーへ入る)",
-        ruleSameCard: "同一カードの重ね出しルール（複数枚同時出し）",
 
         manualHtml: `
             <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
             <li><strong>操作方法：</strong>出せるカードをドラッグ＆ドロップで場に出すか、タップ（クリック）で出せます。</li>
+            <li><strong>同一カード重ね出し：</strong>同じ数字・記号のカードを複数枚選んで同時に出すことができます（ロビー設定でON/OFF可能）。</li>
             <li><strong>UNO宣言：</strong>手札が残り1枚になったら「🔥 UNO!」ボタンを押してください。忘れると他プレイヤーの指摘で2枚ドローのペナルティになります。</li>
-            <li><strong>ドロー累積：</strong>+2や+4に対して同じカードを重ねて次の人へ押し付けることができます（ロビー設定でON/OFF可能）。</li>
-            <li><strong>スワップ（⇄）：</strong>任意の相手1人と手札を丸ごと交換し、好きな色を指定できます。</li>
+            <li><strong>ドロー累積：</strong>+2や+4に対して同じカードを重ねて次の人へ押し付けることができます。</li>
         `
     },
     en: {
@@ -82,6 +84,7 @@ const translations = {
         ruleStack: "Stacking Rule (+2 / +4)",
         ruleSwap: "Include Swap Hand Cards",
         ruleSpectator: "Spectator Mode (On) | Late-Join (Off)",
+        ruleSameCard: "Stack Same Cards Rule (Play Multiple Cards)",
         createRoomBtn: "Create Room",
         joinRoomBtn: "Join Room",
         waitingText: "Waiting...",
@@ -89,6 +92,8 @@ const translations = {
         discardLabel: "Discard Pile:",
         drawBtn: "Draw Card",
         myHandHeading: "Your Hand",
+        clearSelectionBtn: "Clear Selection",
+        playSelectedCountBtn: (n) => `🚀 Play ${n} Selected Card(s)`,
         colorPickerPrompt: "Choose a color",
         swapPrompt: "Choose a player to swap hands with",
         settingsModalTitle: "⚙️ System Settings",
@@ -119,15 +124,14 @@ const translations = {
 
         readyTitle: "Ready",
         readyDesc: "Server connection established.<br>Click below to enter the lobby.",
-        enterLobbyBtn: "OK (Enter Lobby)",
-        ruleSameCard: "Stack Same Cards Rule (Play Multiple Cards)",        
+        enterLobbyBtn: "OK (Enter Lobby)",        
 
         manualHtml: `
             <li><strong>Basic Rules:</strong> Match the top card by color, number, or symbol.</li>
             <li><strong>Controls:</strong> Drag & drop or tap a playable card to play.</li>
+            <li><strong>Stack Same Cards:</strong> Select and play multiple matching cards at once (toggleable in lobby).</li>
             <li><strong>UNO Call:</strong> Press the "🔥 UNO!" button when you have 1 card left. Forget to call and get a 2-card penalty if reported!</li>
             <li><strong>Stacking:</strong> Stack +2 or +4 cards onto the previous one to pass the penalty to the next player.</li>
-            <li><strong>Swap (⇄):</strong> Swap your entire hand with any chosen player and pick a new color.</li>
         `
     }
 };
@@ -205,6 +209,11 @@ let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
 let isMeSpectator = false;
 
+// ▼ 重ね出し用の状態変数
+let selectedCardIndices = [];
+let isSameCardStackEnabledRoom = true;
+let pendingPlayIndices = [];
+
 function showLoading(text = 'Loading...') {
     const overlay = document.getElementById('loading-overlay');
     const textEl = overlay ? overlay.querySelector('.loading-text') : null;
@@ -254,7 +263,6 @@ window.closeSysModal = function(modalId) {
     if (modal) modal.style.display = 'none';
 };
 
-// ▼ サーバー接続時の処理（ロード画面を消して、OKボタン画面を出す）
 socket.on('connect', () => {
     myId = socket.id;
     hideLoading();
@@ -265,7 +273,6 @@ socket.on('connect', () => {
     }
 });
 
-// ▼ 「OK（ゲーム画面へ進む）」ボタンを押したときの処理
 window.addEventListener('DOMContentLoaded', () => {
     const enterLobbyBtn = document.getElementById('enter-lobby-btn');
     if (enterLobbyBtn) {
@@ -286,7 +293,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ▼ 【復活】「部屋を作る」ボタンの処理
 if (createRoomBtn) {
     createRoomBtn.onclick = () => {
         const randomRoom = Math.floor(1000 + Math.random() * 9000).toString();
@@ -311,17 +317,15 @@ function joinRoom() {
     const stackCheckbox = document.getElementById('stack-rule-checkbox');
     const swapCheckbox = document.getElementById('swap-rule-checkbox');
     const spectatorCheckbox = document.getElementById('spectator-rule-checkbox');
-    const sameCardCheckbox = document.getElementById('stack-same-card-checkbox'); // ▼ 追加
+    const sameCardCheckbox = document.getElementById('stack-same-card-checkbox');
     
     const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
     const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
     const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
-    const isSameCardStackEnabled = sameCardCheckbox ? sameCardCheckbox.checked : true; // ▼ 追加
+    const isSameCardStackEnabled = sameCardCheckbox ? sameCardCheckbox.checked : true;
 
     currentRoomId = roomId;
     showLoading(currentLang === 'en' ? 'Joining room...' : '卓を囲んでいます...');
-    
-    // ▼ サーバーへ送るデータに `isSameCardStackEnabled` を追加
     socket.emit('joinRoom', { 
         roomId, 
         name, 
@@ -405,6 +409,13 @@ socket.on('gameState', (data) => {
         gameInfo.classList.add('fade-update');
     }
     latestGameState = data;
+
+    if (typeof data.isSameCardStackEnabled !== 'undefined') {
+        isSameCardStackEnabledRoom = data.isSameCardStackEnabled;
+    }
+    if (data.currentTurnId !== myId) {
+        selectedCardIndices = [];
+    }
 
     if (data.spectators && data.spectators.some(s => s.id === myId)) {
         isMeSpectator = true;
@@ -569,11 +580,44 @@ socket.on('announce', (msg) => {
     turnInfo.style.color = "#f1c40f";
 });
 
+// ▼ 重ね出しコントロールバーの表示更新
+function updateMultiPlayControls() {
+    const controls = document.getElementById('multi-play-controls');
+    const playBtn = document.getElementById('play-selected-btn');
+    if (!controls || !playBtn) return;
+
+    if (selectedCardIndices.length > 0) {
+        controls.style.display = 'flex';
+        playBtn.innerText = t('playSelectedCountBtn', selectedCardIndices.length);
+    } else {
+        controls.style.display = 'none';
+    }
+}
+
+const clearSelectionBtn = document.getElementById('clear-selection-btn');
+if (clearSelectionBtn) {
+    clearSelectionBtn.onclick = () => {
+        selectedCardIndices = [];
+        renderHand();
+    };
+}
+
+const playSelectedBtn = document.getElementById('play-selected-btn');
+if (playSelectedBtn) {
+    playSelectedBtn.onclick = () => {
+        if (selectedCardIndices.length > 0) {
+            executePlayCards(selectedCardIndices);
+        }
+    };
+}
+
 function renderHand() {
     handDiv.innerHTML = '';
     
     if (isMeSpectator) {
         unoBtn.style.display = 'none';
+        selectedCardIndices = [];
+        updateMultiPlayControls();
         const msg = document.createElement('p');
         msg.innerText = t('noHandSpectator');
         msg.style.color = "#bdc3c7";
@@ -583,7 +627,11 @@ function renderHand() {
 
     if (!myCurrentHand) return;
 
-    if (myCurrentHand.length === 1) {
+    selectedCardIndices = selectedCardIndices.filter(idx => idx < myCurrentHand.length);
+    updateMultiPlayControls();
+
+    const remainingAfterPlay = myCurrentHand.length - selectedCardIndices.length;
+    if (myCurrentHand.length === 1 || (selectedCardIndices.length > 0 && remainingAfterPlay === 1)) {
         unoBtn.style.display = 'inline-block';
         if (hasDeclaredUnoThisTurn) {
             unoBtn.disabled = true;
@@ -601,30 +649,50 @@ function renderHand() {
     const pendingDrawCount = latestGameState ? latestGameState.pendingDrawCount : 0;
     const isNewCardDrawn = myCurrentHand.length > previousHandLength && previousHandLength !== 0;
 
+    const firstSelectedCard = selectedCardIndices.length > 0 ? myCurrentHand[selectedCardIndices[0]] : null;
+
     myCurrentHand.forEach((card, index) => {
         const cardDiv = createCardElement(card);
+        const selectionOrder = selectedCardIndices.indexOf(index);
+        const isSelected = selectionOrder !== -1;
 
         if (isNewCardDrawn && index === myCurrentHand.length - 1) {
             cardDiv.classList.add('card-draw-anim');
         }
 
+        if (isSelected) {
+            cardDiv.classList.add('selected-stack');
+            const badge = document.createElement('div');
+            badge.className = 'stack-order-badge';
+            badge.innerText = selectionOrder + 1;
+            cardDiv.appendChild(badge);
+        }
+
         let isPlayable = false;
         if (isMyTurn && topCard) {
-            if (pendingDrawCount > 0) {
-                if (topCard.value === 'draw2') {
-                    isPlayable = (card.value === 'draw2' || card.value === 'wild_draw4');
-                } else if (topCard.value === 'wild_draw4') {
-                    isPlayable = (card.value === 'wild_draw4');
+            if (firstSelectedCard) {
+                if (isSelected) {
+                    isPlayable = true;
+                } else if (isSameCardStackEnabledRoom) {
+                    isPlayable = (card.value === firstSelectedCard.value);
                 }
             } else {
-                if (card.color === 'wild') {
-                    isPlayable = true;
-                } else if (topCard.color === 'wild') {
-                    isPlayable = (card.color === topCard.designatedColor);
+                if (pendingDrawCount > 0) {
+                    if (topCard.value === 'draw2') {
+                        isPlayable = (card.value === 'draw2' || card.value === 'wild_draw4');
+                    } else if (topCard.value === 'wild_draw4') {
+                        isPlayable = (card.value === 'wild_draw4');
+                    }
                 } else {
-                    const isSameColor = card.color === topCard.color;
-                    const isSameValue = (card.value === topCard.value);
-                    isPlayable = isSameColor || isSameValue;
+                    if (card.color === 'wild') {
+                        isPlayable = true;
+                    } else if (topCard.color === 'wild') {
+                        isPlayable = (card.color === topCard.designatedColor);
+                    } else {
+                        const isSameColor = card.color === topCard.color;
+                        const isSameValue = (card.value === topCard.value);
+                        isPlayable = isSameColor || isSameValue;
+                    }
                 }
             }
         }
@@ -637,9 +705,10 @@ function renderHand() {
                 const startX = e.clientX;
                 const startY = e.clientY;
                 const rect = cardDiv.getBoundingClientRect();
-                
                 const offsetX = e.clientX - rect.left;
                 const offsetY = e.clientY - rect.top;
+
+                const targetIndices = isSelected ? [...selectedCardIndices] : [index];
 
                 const clone = cardDiv.cloneNode(true);
                 clone.style.position = 'fixed';
@@ -648,8 +717,17 @@ function renderHand() {
                 clone.style.zIndex = '1000';
                 clone.style.cursor = 'grabbing';
                 clone.style.pointerEvents = 'none';
-                document.body.appendChild(clone);
 
+                if (targetIndices.length > 1) {
+                    const countTag = document.createElement('div');
+                    countTag.className = 'stack-order-badge';
+                    countTag.style.width = '28px';
+                    countTag.style.height = '28px';
+                    countTag.innerText = `×${targetIndices.length}`;
+                    clone.appendChild(countTag);
+                }
+
+                document.body.appendChild(clone);
                 cardDiv.style.opacity = '0.2';
 
                 let hasMoved = false;
@@ -658,15 +736,10 @@ function renderHand() {
                 function onMouseMove(moveEvent) {
                     const dx = Math.abs(moveEvent.clientX - startX);
                     const dy = Math.abs(moveEvent.clientY - startY);
-                    
-                    if (dx > 5 || dy > 5) {
-                        hasMoved = true;
-                    }
+                    if (dx > 5 || dy > 5) hasMoved = true;
 
-                    const x = moveEvent.clientX - offsetX;
-                    const y = moveEvent.clientY - offsetY;
-                    clone.style.left = `${x}px`;
-                    clone.style.top = `${y}px`;
+                    clone.style.left = `${moveEvent.clientX - offsetX}px`;
+                    clone.style.top = `${moveEvent.clientY - offsetY}px`;
                     clone.style.transform = `scale(1.12)`;
 
                     if (discardArea) {
@@ -677,22 +750,14 @@ function renderHand() {
                             moveEvent.clientY >= dropRect.top &&
                             moveEvent.clientY <= dropRect.bottom
                         );
-
-                        if (isInsideNow) {
-                            discardArea.classList.add('drag-over');
-                        } else {
-                            discardArea.classList.remove('drag-over');
-                        }
+                        discardArea.classList.toggle('drag-over', isInsideNow);
                     }
                 }
 
                 function onMouseUp(upEvent) {
                     window.removeEventListener('mousemove', onMouseMove);
                     window.removeEventListener('mouseup', onMouseUp);
-
-                    if (discardArea) {
-                        discardArea.classList.remove('drag-over');
-                    }
+                    if (discardArea) discardArea.classList.remove('drag-over');
 
                     const dropRect = discardArea.getBoundingClientRect();
                     const isInside = (
@@ -705,7 +770,7 @@ function renderHand() {
                     if (isInside && hasMoved) {
                         document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
-                        playSelectedCard(card, index);
+                        executePlayCards(targetIndices);
                     } else {
                         const finalRect = cardDiv.getBoundingClientRect();
                         clone.style.transition = 'transform 0.25s ease, opacity 0.25s ease, left 0.25s ease, top 0.25s ease';
@@ -725,8 +790,18 @@ function renderHand() {
                 window.addEventListener('mouseup', onMouseUp);
             };
 
-            cardDiv.onclick = (e) => {
-                playSelectedCard(card, index);
+            cardDiv.onclick = () => {
+                if (!isSameCardStackEnabledRoom) {
+                    executePlayCards([index]);
+                    return;
+                }
+
+                if (isSelected) {
+                    selectedCardIndices = selectedCardIndices.filter(i => i !== index);
+                } else {
+                    selectedCardIndices.push(index);
+                }
+                renderHand();
             };
         }
 
@@ -743,15 +818,21 @@ unoBtn.onclick = () => {
     socket.emit('callUno', { roomId: currentRoomId });
 };
 
-function playSelectedCard(card, index) {
-    if (card.value === 'swap') {
-        pendingSwapCardIndex = index;
+function executePlayCards(indices) {
+    if (!indices || indices.length === 0) return;
+    const baseCard = myCurrentHand[indices[0]];
+    if (!baseCard) return;
+
+    if (baseCard.value === 'swap') {
+        pendingPlayIndices = [...indices];
         openSwapPlayerModal();
-    } else if (card.color === 'wild') {
-        pendingWildCardIndex = index;
+    } else if (baseCard.color === 'wild') {
+        pendingPlayIndices = [...indices];
         colorPickerModal.style.display = 'flex';
     } else {
-        socket.emit('playCard', { roomId: currentRoomId, cardIndex: index });
+        socket.emit('playCards', { roomId: currentRoomId, cardIndices: indices });
+        selectedCardIndices = [];
+        updateMultiPlayControls();
     }
 }
 
@@ -770,7 +851,6 @@ function openSwapPlayerModal() {
             btn.onclick = () => {
                 selectedSwapTargetId = p.id;
                 swapPlayerModal.style.display = 'none';
-                pendingWildCardIndex = pendingSwapCardIndex;
                 colorPickerModal.style.display = 'flex';
             };
             swapPlayerButtons.appendChild(btn);
@@ -783,35 +863,29 @@ function openSwapPlayerModal() {
 window.selectWildColor = function(color) {
     colorPickerModal.style.display = 'none';
     
-    if (pendingSwapCardIndex !== null) {
-        socket.emit('playCard', { 
+    if (pendingPlayIndices.length > 0) {
+        socket.emit('playCards', { 
             roomId: currentRoomId, 
-            cardIndex: pendingSwapCardIndex, 
+            cardIndices: pendingPlayIndices, 
             chosenColor: color, 
             targetPlayerId: selectedSwapTargetId 
         });
-        pendingSwapCardIndex = null;
+        pendingPlayIndices = [];
         selectedSwapTargetId = null;
-    } else if (pendingWildCardIndex !== null) {
-        socket.emit('playCard', { 
-            roomId: currentRoomId, 
-            cardIndex: pendingWildCardIndex, 
-            chosenColor: color 
-        });
-        pendingWildCardIndex = null;
+        selectedCardIndices = [];
+        updateMultiPlayControls();
     }
 };
 
 window.cancelWildColor = function() {
     colorPickerModal.style.display = 'none';
-    pendingWildCardIndex = null;
-    pendingSwapCardIndex = null;
+    pendingPlayIndices = [];
     selectedSwapTargetId = null;
 };
 
 window.cancelSwapModal = function() {
     swapPlayerModal.style.display = 'none';
-    pendingSwapCardIndex = null;
+    pendingPlayIndices = [];
     selectedSwapTargetId = null;
 };
 
