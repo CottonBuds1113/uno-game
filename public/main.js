@@ -702,9 +702,15 @@ function renderHand() {
             }
         }
 
-        if (!isPlayable) {
+        // ▼【クリック操作のルール】
+        // 既にカードが選択されており、かつ「まだ選ばれていないが、同じ数字・記号のカード」である場合、
+        // クリックしたときに選択状態になり、1枚目の上に重なって右にズレ、非半透明化する。
+        const canBeClickedToStack = selectedCardIndices.length > 0 && !isSelected && isSameCardStackEnabledRoom && (card.value === firstSelectedCard.value);
+
+        if (!isPlayable && !canBeClickedToStack) {
             cardDiv.classList.add('disabled');
         } else {
+            // ドラッグ＆ドロップ操作のロジック
             cardDiv.onmousedown = (e) => {
                 e.preventDefault();
                 const startX = e.clientX;
@@ -747,6 +753,7 @@ function renderHand() {
                     clone.style.top = `${moveEvent.clientY - offsetY}px`;
                     clone.style.transform = `scale(1.12)`;
 
+                    // 場のカードエリアへのホバー判定
                     if (discardArea) {
                         const dropRect = discardArea.getBoundingClientRect();
                         const isInsideNow = (
@@ -757,12 +764,39 @@ function renderHand() {
                         );
                         discardArea.classList.toggle('drag-over', isInsideNow);
                     }
+
+                    // ▼【ドラッグ中】他の手札カードの上に触れさせたとき、重ねられるカードを光らせる（わかりやすくする）
+                    const handCards = handDiv.querySelectorAll('.card');
+                    handCards.forEach((cEl, cIdx) => {
+                        if (cIdx !== index) {
+                            const cRect = cEl.getBoundingClientRect();
+                            const isOverCard = (
+                                moveEvent.clientX >= cRect.left &&
+                                moveEvent.clientX <= cRect.right &&
+                                moveEvent.clientY >= cRect.top &&
+                                moveEvent.clientY <= cRect.bottom
+                            );
+                            if (isOverCard && isSameCardStackEnabledRoom && myCurrentHand[cIdx].value === card.value) {
+                                cEl.style.boxShadow = '0 0 15px #38bdf8';
+                                cEl.style.borderColor = '#38bdf8';
+                            } else if (!selectedCardIndices.includes(cIdx)) {
+                                cEl.style.boxShadow = '';
+                                cEl.style.borderColor = '';
+                            }
+                        }
+                    });
                 }
 
                 function onMouseUp(upEvent) {
                     window.removeEventListener('mousemove', onMouseMove);
                     window.removeEventListener('mouseup', onMouseUp);
                     if (discardArea) discardArea.classList.remove('drag-over');
+
+                    // 手札のハイライトをリセット
+                    handDiv.querySelectorAll('.card').forEach(cEl => {
+                        cEl.style.boxShadow = '';
+                        cEl.style.borderColor = '';
+                    });
 
                     const dropRect = discardArea.getBoundingClientRect();
                     const isInsideDiscard = (
@@ -772,7 +806,7 @@ function renderHand() {
                         upEvent.clientY <= dropRect.bottom
                     );
 
-                    // ▼ 【追加】 他の手札カードの上にドロップされたか判定（グループ化）
+                    // ▼【ドロップ判定 1】手札の別のカードの上にドロップされた場合 ＝ グループ化して重ねる
                     let targetCardIndex = -1;
                     const handCards = handDiv.querySelectorAll('.card');
                     handCards.forEach((cEl, cIdx) => {
@@ -789,26 +823,30 @@ function renderHand() {
                         }
                     });
 
-                    // 1. 場のカードへドロップ ＝ カードを場に出す
                     if (isInsideDiscard && hasMoved) {
                         document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
                         const indicesToPlay = selectedCardIndices.length > 0 ? selectedCardIndices : [index];
                         executePlayCards(indicesToPlay);
                     } 
-                    // 2. 手札の別のカードへドロップ ＝ グループ化（重ねる）
                     else if (targetCardIndex !== -1 && isSameCardStackEnabledRoom) {
                         document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
 
                         const targetCard = myCurrentHand[targetCardIndex];
                         if (targetCard.value === card.value) {
-                            if (!selectedCardIndices.includes(index)) selectedCardIndices.push(index);
-                            if (!selectedCardIndices.includes(targetCardIndex)) selectedCardIndices.push(targetCardIndex);
+                            // ドラッグしたカード、または選択中の束を、ターゲットのカードの上に重ねる
+                            if (!selectedCardIndices.includes(targetCardIndex)) {
+                                selectedCardIndices.push(targetCardIndex);
+                            }
+                            targetIndices.forEach(idx => {
+                                if (!selectedCardIndices.includes(idx)) {
+                                    selectedCardIndices.push(idx);
+                                }
+                            });
                             renderHand();
                         }
                     } 
-                    // 3. どこにも重ならなかった場合 ＝ 元の位置に戻る
                     else {
                         const finalRect = cardDiv.getBoundingClientRect();
                         clone.style.transition = 'transform 0.25s ease, opacity 0.25s ease, left 0.25s ease, top 0.25s ease';
@@ -828,6 +866,7 @@ function renderHand() {
                 window.addEventListener('mouseup', onMouseUp);
             };
 
+            // ▼【クリック操作のロジック】
             cardDiv.onclick = () => {
                 if (!isSameCardStackEnabledRoom) {
                     executePlayCards([index]);
@@ -835,12 +874,29 @@ function renderHand() {
                 }
 
                 if (isSelected) {
+                    // すでに選択されているものをクリックしたら選択解除
                     selectedCardIndices = selectedCardIndices.filter(i => i !== index);
                 } else {
+                    // 新たにクリックされた場合、選択状態にしてグループに追加
                     selectedCardIndices.push(index);
                 }
                 renderHand();
             };
+        }
+
+        // 描画時に選ばれているカードならクラスを付与
+        if (isSelected) {
+            cardDiv.classList.add('selected-stack');
+            if (selectionOrder > 0) {
+                cardDiv.classList.add('stacked-offset');
+                // 何番目に重ねられたかをCSS変数にセット（ズレ幅とz-indexのレイヤー制御に使用）
+                cardDiv.style.setProperty('--stack-order', selectionOrder);
+            }
+
+            const badge = document.createElement('div');
+            badge.className = 'stack-order-badge';
+            badge.innerText = selectionOrder + 1;
+            cardDiv.appendChild(badge);
         }
 
         handDiv.appendChild(cardDiv);

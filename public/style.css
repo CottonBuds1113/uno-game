@@ -1153,18 +1153,26 @@ button:disabled {
 }
 
 /* ====================================
-   手札内での重ね合わせ・ずらしビジュアル（修正版）
+   手札内での重ね合わせ・ずらしビジュアル（完全版）
 ==================================== */
 
-/* 選択されたカード全体のベース（少し上に浮き上がらせる） */
+/* 選択されたカード全体のベース */
 #hand .card.selected-stack {
-    transform: translateY(-22px) scale(1.02) !important;
     border-color: #38bdf8 !important;
     box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    z-index: calc(20 + var(--stack-order, 0)) !important;
 }
 
-/* 2枚目以降のカード：縦の高さは揃えつつ、右方向へキレイに横並びで重ねる */
+/* 1枚目（基準となるカード） */
+#hand .card.selected-stack:not(.stacked-offset) {
+    transform: translateY(-22px) scale(1.02) !important;
+    z-index: 20 !important;
+    opacity: 1 !important; /* 非半透明化 */
+}
+
+/* 2枚目以降（重ねられたカード：レイヤー的に上 ＆ 右へズレる ＆ 非半透明化） */
 #hand .card.selected-stack.stacked-offset {
-    transform: translateY(-22px) translateX(calc(var(--stack-order, 0) * 24px)) scale(1.02) !important;
+    transform: translateY(-22px) translateX(calc(var(--stack-order, 1) * 24px)) scale(1.02) !important;
+    /* レイヤー的に上に重ねるため、インデックスに応じてz-indexを高くする */
+    z-index: calc(30 + var(--stack-order, 1)) !important;
+    opacity: 1 !important; /* 非半透明化して見やすくする */
 }
