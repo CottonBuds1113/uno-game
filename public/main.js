@@ -63,10 +63,9 @@ const translations = {
 
         manualHtml: `
             <li><strong>基本ルール：</strong>場に出ているカードと「同じ色」または「同じ数字・記号」のカードを出せます。</li>
-            <li><strong>操作方法：</strong>出せるカードをドラッグ＆ドロップで場に出すか、タップ（クリック）で出せます。</li>
-            <li><strong>同一カード重ね出し：</strong>同じ数字・記号のカードを複数枚選んで同時に出すことができます（ロビー設定でON/OFF可能）。</li>
-            <li><strong>UNO宣言：</strong>手札が残り1枚になったら「🔥 UNO!」ボタンを押してください。忘れると他プレイヤーの指摘で2枚ドローのペナルティになります。</li>
-            <li><strong>ドロー累積：</strong>+2や+4に対して同じカードを重ねて次の人へ押し付けることができます。</li>
+            <li><strong>操作方法：</strong>カードをタップするか、場のカードへドラッグ＆ドロップして出せます。手札のカード同士をドラッグ＆ドロップで重ねてグループ化することもできます。</li>
+            <li><strong>同一カード重ね出し：</strong>同じ数字・記号のカードを複数枚まとめて出すことができます（ロビー設定でON/OFF可能）。</li>
+            <li><strong>UNO宣言：</strong>手札が残り1枚になったら「🔥 UNO!」ボタンを押してください。</li>
         `
     },
     en: {
@@ -127,11 +126,10 @@ const translations = {
         enterLobbyBtn: "OK (Enter Lobby)",        
 
         manualHtml: `
-            <li><strong>Basic Rules:</strong> Match the top card by color, number, or symbol.</li>
-            <li><strong>Controls:</strong> Drag & drop or tap a playable card to play.</li>
-            <li><strong>Stack Same Cards:</strong> Select and play multiple matching cards at once (toggleable in lobby).</li>
-            <li><strong>UNO Call:</strong> Press the "🔥 UNO!" button when you have 1 card left. Forget to call and get a 2-card penalty if reported!</li>
-            <li><strong>Stacking:</strong> Stack +2 or +4 cards onto the previous one to pass the penalty to the next player.</li>
+            <li><strong>Basic Rules:</strong> Match top card by color, number, or symbol.</li>
+            <li><strong>Controls:</strong> Drag to discard or drag cards onto each other in your hand to group them.</li>
+            <li><strong>Stack Same Cards:</strong> Select and play multiple matching cards at once.</li>
+            <li><strong>UNO Call:</strong> Press the "🔥 UNO!" button when you have 1 card left.</li>
         `
     }
 };
@@ -662,6 +660,10 @@ function renderHand() {
 
         if (isSelected) {
             cardDiv.classList.add('selected-stack');
+            if (selectionOrder > 0) {
+                cardDiv.classList.add('stacked-offset');
+            }
+
             const badge = document.createElement('div');
             badge.className = 'stack-order-badge';
             badge.innerText = selectionOrder + 1;
@@ -760,18 +762,51 @@ function renderHand() {
                     if (discardArea) discardArea.classList.remove('drag-over');
 
                     const dropRect = discardArea.getBoundingClientRect();
-                    const isInside = (
+                    const isInsideDiscard = (
                         upEvent.clientX >= dropRect.left &&
                         upEvent.clientX <= dropRect.right &&
                         upEvent.clientY >= dropRect.top &&
                         upEvent.clientY <= dropRect.bottom
                     );
 
-                    if (isInside && hasMoved) {
+                    // ▼ 【追加】 他の手札カードの上にドロップされたか判定（グループ化）
+                    let targetCardIndex = -1;
+                    const handCards = handDiv.querySelectorAll('.card');
+                    handCards.forEach((cEl, cIdx) => {
+                        if (cIdx !== index) {
+                            const cRect = cEl.getBoundingClientRect();
+                            if (
+                                upEvent.clientX >= cRect.left &&
+                                upEvent.clientX <= cRect.right &&
+                                upEvent.clientY >= cRect.top &&
+                                upEvent.clientY <= cRect.bottom
+                            ) {
+                                targetCardIndex = cIdx;
+                            }
+                        }
+                    });
+
+                    // 1. 場のカードへドロップ ＝ カードを場に出す
+                    if (isInsideDiscard && hasMoved) {
                         document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
-                        executePlayCards(targetIndices);
-                    } else {
+                        const indicesToPlay = selectedCardIndices.length > 0 ? selectedCardIndices : [index];
+                        executePlayCards(indicesToPlay);
+                    } 
+                    // 2. 手札の別のカードへドロップ ＝ グループ化（重ねる）
+                    else if (targetCardIndex !== -1 && isSameCardStackEnabledRoom) {
+                        document.body.removeChild(clone);
+                        cardDiv.style.opacity = '1';
+
+                        const targetCard = myCurrentHand[targetCardIndex];
+                        if (targetCard.value === card.value) {
+                            if (!selectedCardIndices.includes(index)) selectedCardIndices.push(index);
+                            if (!selectedCardIndices.includes(targetCardIndex)) selectedCardIndices.push(targetCardIndex);
+                            renderHand();
+                        }
+                    } 
+                    // 3. どこにも重ならなかった場合 ＝ 元の位置に戻る
+                    else {
                         const finalRect = cardDiv.getBoundingClientRect();
                         clone.style.transition = 'transform 0.25s ease, opacity 0.25s ease, left 0.25s ease, top 0.25s ease';
                         clone.style.left = `${finalRect.left}px`;
