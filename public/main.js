@@ -660,6 +660,9 @@ function renderHand() {
 
         if (isSelected) {
             cardDiv.classList.add('selected-stack');
+            // CSS変数に何番目に選ばれたかを渡して、ズレ幅を綺麗に計算させる
+            cardDiv.style.setProperty('--stack-order', selectionOrder);
+
             if (selectionOrder > 0) {
                 cardDiv.classList.add('stacked-offset');
             }
