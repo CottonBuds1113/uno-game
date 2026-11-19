@@ -15,6 +15,7 @@ body {
 /* ====================================
    上部システムメニューバー & モーダル
 ==================================== */
+/* 上部システムメニューバー */
 #top-menu-bar {
     position: fixed;
     top: 0;
@@ -30,10 +31,9 @@ body {
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
-    z-index: 4000;
+    z-index: 6000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     
-    /* ▼ 追加：上からスライドインするための動き（ロビー画面の速度と合わせる） */
     transition: transform 0.85s cubic-bezier(0.05, 0.9, 0.1, 1), opacity 0.85s ease;
 }
 
@@ -95,7 +95,7 @@ body {
     backdrop-filter: blur(3px);
     justify-content: center;
     align-items: center;
-    z-index: 5000;
+    z-index: 7000;
 }
 
 .sys-modal-card {
