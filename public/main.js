@@ -428,25 +428,32 @@ socket.on('gameState', (data) => {
     if (isMeSpectator) {
         turnInfo.innerText = t('spectatorModeMsg');
         turnInfo.style.color = "#3498db";
+        turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
         drawBtn.style.display = 'none';
     } else {
         drawBtn.style.display = 'flex';
         const isMyTurn = (data.currentTurnId === myId);
 
         if (isMyTurn) {
+            turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
+            void turnInfo.offsetWidth;
+            turnInfo.classList.add('my-turn-active');
+
             if (data.pendingDrawCount > 0) {
+                turnInfo.classList.add('my-turn-penalty');
                 turnInfo.innerText = t('stackWarning', data.pendingDrawCount);
-                turnInfo.style.color = "#e74c3c";
+                turnInfo.style.color = "#fecaca";
                 if (drawBtnLabel) drawBtnLabel.innerText = t('drawNBtn', data.pendingDrawCount);
                 drawBtn.classList.add('penalty-draw');
             } else {
                 turnInfo.innerText = t('myTurnMsg');
-                turnInfo.style.color = "#2ecc71";
+                turnInfo.style.color = "#a7f3d0";
                 if (drawBtnLabel) drawBtnLabel.innerText = t('drawBtn');
                 drawBtn.classList.remove('penalty-draw');
             }
             drawBtn.disabled = false;
         } else {
+            turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
             if (data.pendingDrawCount > 0) {
                 turnInfo.innerText = t('stackingInfo', data.pendingDrawCount);
             } else {
@@ -583,6 +590,7 @@ socket.on('yourHand', (hand) => {
 socket.on('announce', (msg) => {
     turnInfo.innerText = msg;
     turnInfo.style.color = "#f1c40f";
+    turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
 });
 
 // ▼ 重ね出しコントロールバーの表示更新（スペースを維持したままactiveクラスで切り替え）
