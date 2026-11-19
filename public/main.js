@@ -982,6 +982,7 @@ unoBtn.onclick = () => {
 };
 
 function executePlayCards(indices) {
+    console.log('executePlayCards called with indices:', indices, indices.map(i => myCurrentHand[i]));
     if (!indices || indices.length === 0) return;
     const baseCard = myCurrentHand[indices[0]];
     if (!baseCard) return;
