@@ -1014,7 +1014,59 @@ window.cancelSwapModal = function() {
     selectedSwapTargetId = null;
 };
 
+drawBtn.onclick = () => {function playDrawCardAnimation(count = 1) {
+    const handContainer = document.getElementById('hand');
+    const sourceEl = document.getElementById('draw-btn') || document.getElementById('discard-area');
+    if (!handContainer || !sourceEl) return;
+
+    const safeCount = Math.min(Math.max(Number(count) || 1, 1), 6);
+    const startRect = sourceEl.getBoundingClientRect();
+    const handRect = handContainer.getBoundingClientRect();
+
+    const targetX = handRect.left + handRect.width / 2 - 37;
+    const targetY = handRect.top + Math.min(handRect.height / 2, 60) - 55;
+
+    for (let i = 0; i < safeCount; i++) {
+        setTimeout(() => {
+            const flyer = document.createElement('div');
+            flyer.className = 'flying-draw-card';
+
+            const startX = startRect.left + startRect.width / 2 - 37;
+            const startY = startRect.top + startRect.height / 2 - 55;
+
+            flyer.style.left = `${startX}px`;
+            flyer.style.top = `${startY}px`;
+            flyer.style.transform = 'scale(0.85) rotate(-8deg)';
+            flyer.style.opacity = '0.95';
+
+            document.body.appendChild(flyer);
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    flyer.style.transition = 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), left 0.36s cubic-bezier(0.22, 1, 0.36, 1), top 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease';
+                    flyer.style.left = `${targetX + (i - (safeCount - 1) / 2) * 18}px`;
+                    flyer.style.top = `${targetY}px`;
+                    flyer.style.transform = 'scale(1) rotate(0deg)';
+                    flyer.style.opacity = '0.2';
+                });
+            });
+
+            setTimeout(() => {
+                if (flyer.parentNode) {
+                    flyer.parentNode.removeChild(flyer);
+                }
+            }, 380);
+        }, i * 85);
+    }
+}
+
 drawBtn.onclick = () => {
+    const drawAmount = (latestGameState && latestGameState.pendingDrawCount > 0)
+        ? latestGameState.pendingDrawCount
+        : 1;
+    playDrawCardAnimation(drawAmount);
+    socket.emit('drawCard', { roomId: currentRoomId });
+};
     socket.emit('drawCard', { roomId: currentRoomId });
 };
 

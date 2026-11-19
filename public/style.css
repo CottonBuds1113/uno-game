@@ -1264,3 +1264,44 @@ button:disabled {
         box-sizing: border-box;
     }
 }
+
+/* ====================================
+   山札から引くときの飛行ドロー演出
+==================================== */
+.flying-draw-card {
+    position: fixed;
+    width: 75px;
+    height: 110px;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+    background-color: #1a1a1a;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7), 0 0 14px rgba(255, 255, 255, 0.25);
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 6500;
+    transform-origin: center center;
+}
+
+.flying-draw-card::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 56px;
+    height: 82px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) rotate(-22deg);
+}
+
+@media screen and (max-width: 768px) {
+    .flying-draw-card {
+        width: 62px;
+        height: 90px;
+    }
+
+    .flying-draw-card::before {
+        width: 46px;
+        height: 66px;
+    }
+}
