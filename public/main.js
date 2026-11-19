@@ -25,6 +25,7 @@ const translations = {
         waitingText: "待機中...",
         playersHeading: "プレイヤー",
         discardLabel: "場のカード:",
+        deckLabel: "山札:",
         drawBtn: "山札から引く",
         myHandHeading: "あなたの手札",
         clearSelectionBtn: "選択解除",
@@ -89,6 +90,7 @@ const translations = {
         waitingText: "Waiting...",
         playersHeading: "Players",
         discardLabel: "Discard Pile:",
+        deckLabel: "Deck:",
         drawBtn: "Draw Card",
         myHandHeading: "Your Hand",
         clearSelectionBtn: "Clear Selection",
@@ -187,6 +189,7 @@ const turnInfo = document.getElementById('turn-info');
 const playerList = document.getElementById('player-list');
 const handDiv = document.getElementById('hand');
 const drawBtn = document.getElementById('draw-btn');
+const drawBtnLabel = document.getElementById('draw-btn-label');
 const unoBtn = document.getElementById('uno-btn');
 const colorPickerModal = document.getElementById('color-picker-modal');
 const swapPlayerModal = document.getElementById('swap-player-modal');
@@ -426,18 +429,20 @@ socket.on('gameState', (data) => {
         turnInfo.style.color = "#3498db";
         drawBtn.style.display = 'none';
     } else {
-        drawBtn.style.display = 'inline-block';
+        drawBtn.style.display = 'flex';
         const isMyTurn = (data.currentTurnId === myId);
 
         if (isMyTurn) {
             if (data.pendingDrawCount > 0) {
                 turnInfo.innerText = t('stackWarning', data.pendingDrawCount);
                 turnInfo.style.color = "#e74c3c";
-                drawBtn.innerText = t('drawNBtn', data.pendingDrawCount);
+                if (drawBtnLabel) drawBtnLabel.innerText = t('drawNBtn', data.pendingDrawCount);
+                drawBtn.classList.add('penalty-draw');
             } else {
                 turnInfo.innerText = t('myTurnMsg');
                 turnInfo.style.color = "#2ecc71";
-                drawBtn.innerText = t('drawBtn');
+                if (drawBtnLabel) drawBtnLabel.innerText = t('drawBtn');
+                drawBtn.classList.remove('penalty-draw');
             }
             drawBtn.disabled = false;
         } else {
@@ -447,7 +452,8 @@ socket.on('gameState', (data) => {
                 turnInfo.innerText = t('waitingTurn');
             }
             turnInfo.style.color = "#ecf0f1";
-            drawBtn.innerText = t('drawBtn');
+            if (drawBtnLabel) drawBtnLabel.innerText = t('drawBtn');
+            drawBtn.classList.remove('penalty-draw');
             drawBtn.disabled = true;
         }
     }
@@ -1014,7 +1020,7 @@ window.cancelSwapModal = function() {
     selectedSwapTargetId = null;
 };
 
-drawBtn.onclick = () => {function playDrawCardAnimation(count = 1) {
+function playDrawCardAnimation(count = 1) {
     const handContainer = document.getElementById('hand');
     const sourceEl = document.getElementById('draw-btn') || document.getElementById('discard-area');
     if (!handContainer || !sourceEl) return;
@@ -1065,8 +1071,6 @@ drawBtn.onclick = () => {
         ? latestGameState.pendingDrawCount
         : 1;
     playDrawCardAnimation(drawAmount);
-    socket.emit('drawCard', { roomId: currentRoomId });
-};
     socket.emit('drawCard', { roomId: currentRoomId });
 };
 

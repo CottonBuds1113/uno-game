@@ -229,7 +229,7 @@ body {
     justify-content: center;
 }
 
-.button-group button, #draw-btn, .primary-btn {
+.button-group button, .primary-btn {
     background-color: #00000050;
     color: white;
     border: none;
@@ -241,13 +241,13 @@ body {
     transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
 }
 
-.button-group button:hover, #draw-btn:hover, .primary-btn:hover {
+.button-group button:hover, .primary-btn:hover {
     background-color: #ffffff;
     color: #000000;
     transform: scale(1.05);
 }
 
-.button-group button:active, #draw-btn:active, .primary-btn:active {
+.button-group button:active, .primary-btn:active {
     transform: scale(0.96);
 }
 
@@ -295,8 +295,32 @@ button:disabled {
     pointer-events: auto;
 }
 
+/* ====================================
+   テーブル中央：場のカード ＆ 山札デッキ横並び
+==================================== */
+.table-center-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 28px;
+    margin: 12px auto 8px auto;
+}
+
+.pile-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pile-label {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: bold;
+}
+
 #discard-area {
-    margin: 15px auto;
+    margin: 0 auto;
     width: 100px;
     height: 140px;
     border: 2px dashed #bdc3c7;
@@ -306,6 +330,113 @@ button:disabled {
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.2);
     position: relative;
+    transition: all 0.15s ease;
+}
+
+.deck-pile-btn {
+    position: relative;
+    width: 100px;
+    height: 140px;
+    border-radius: 12px;
+    border: 3px solid #ffffff;
+    background: linear-gradient(145deg, #222222, #111111);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 3px 0 #dcdde1,
+        0 5px 0 #2f3640,
+        0 8px 0 #dcdde1,
+        0 10px 0 #2f3640,
+        0 14px 22px rgba(0, 0, 0, 0.65);
+    transition: transform 0.18s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    user-select: none;
+}
+
+.deck-pile-btn::before {
+    content: '';
+    position: absolute;
+    width: 74px;
+    height: 108px;
+    background-color: #e74c3c;
+    border-radius: 50%;
+    transform: rotate(-24deg);
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.35);
+}
+
+.deck-uno-mark {
+    position: relative;
+    z-index: 2;
+    font-size: 20px;
+    font-weight: 900;
+    font-style: italic;
+    color: #f1c40f;
+    letter-spacing: 1px;
+    transform: rotate(-24deg);
+    text-shadow: 2px 2px 0 #000000;
+}
+
+.deck-action-badge {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    white-space: nowrap;
+    background: rgba(13, 17, 23, 0.92);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.deck-pile-btn:not(:disabled) {
+    border-color: #2ecc71;
+    box-shadow:
+        0 3px 0 #dcdde1,
+        0 5px 0 #2f3640,
+        0 8px 0 #dcdde1,
+        0 10px 0 #2f3640,
+        0 0 18px rgba(46, 204, 113, 0.55);
+}
+
+.deck-pile-btn:not(:disabled) .deck-action-badge {
+    background: #27ae60;
+    border-color: #ffffff;
+}
+
+.deck-pile-btn:not(:disabled):hover {
+    transform: translateY(-4px) scale(1.03);
+}
+
+.deck-pile-btn:not(:disabled):active {
+    transform: translateY(2px) scale(0.98);
+}
+
+.deck-pile-btn:disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed;
+    filter: grayscale(35%);
+}
+
+.deck-pile-btn.penalty-draw:not(:disabled) {
+    border-color: #e74c3c;
+    box-shadow:
+        0 3px 0 #dcdde1,
+        0 5px 0 #2f3640,
+        0 8px 0 #dcdde1,
+        0 10px 0 #2f3640,
+        0 0 22px rgba(231, 76, 60, 0.8);
+}
+
+.deck-pile-btn.penalty-draw:not(:disabled) .deck-action-badge {
+    background: #e74c3c;
 }
 
 #hand {
@@ -715,6 +846,25 @@ button:disabled {
         box-sizing: border-box;
     }
 
+    .table-center-row {
+        gap: 18px;
+    }
+
+    #discard-area,
+    .deck-pile-btn {
+        width: 86px;
+        height: 122px;
+    }
+
+    .deck-pile-btn::before {
+        width: 64px;
+        height: 92px;
+    }
+
+    .deck-uno-mark {
+        font-size: 16px;
+    }
+
     #hand {
         max-width: 100%;
         gap: 6px;
@@ -1045,10 +1195,6 @@ button:disabled {
     transition: all 0.15s ease;
 }
 
-#discard-area {
-    transition: all 0.15s ease;
-}
-
 /* ====================================
    Renderターミナル風：準備完了・スタート画面
 ==================================== */
@@ -1072,20 +1218,17 @@ button:disabled {
 }
 
 .ready-card {
-    /* ターミナル風のダークウィンドウ */
     background: #0d1117;
-    border: 1px solid rgba(56, 189, 248, 0.3); /* シアン/ブルー系のシャープな枠線 */
+    border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 8px;
     padding: 35px 40px;
-    text-align: left; /* ターミナルっぽく左寄せに */
+    text-align: left;
     box-shadow: 0 0 30px rgba(124, 58, 237, 0.2), 0 20px 40px rgba(0, 0, 0, 0.8);
     color: #e2e8f0;
     max-width: 440px;
     width: 90%;
     transform: scale(0.95);
     animation: readyCardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
-    /* ターミナルらしい等幅フォントを適用 */
     font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
 }
 
@@ -1105,7 +1248,7 @@ button:disabled {
     font-size: 20px;
     margin: 0 0 14px 0;
     letter-spacing: 1px;
-    color: #38bdf8; /* ターミナルブルー */
+    color: #38bdf8;
     font-weight: 700;
 }
 
@@ -1117,7 +1260,6 @@ button:disabled {
 }
 
 #enter-lobby-btn {
-    /* パープルとブルーのグラデーション、コンソール風の角丸少なめ */
     background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
     color: #ffffff;
     width: 100%;
@@ -1151,8 +1293,6 @@ button:disabled {
 /* ====================================
    複数枚重ね出し（選択中）のカード演出
 ==================================== */
-
-/* 選択中のカード束の順番バッジ（1枚目、2枚目...） */
 .stack-order-badge {
     position: absolute;
     top: -6px;
@@ -1175,19 +1315,15 @@ button:disabled {
 /* ====================================
    手札内での重ね合わせ・ずらしビジュアル（束・スタック構造）
 ==================================== */
-
-/* 手札コンテナを基準位置とする */
 #hand {
     position: relative;
 }
 
-/* 選択されていない通常のカード */
 #hand .card {
     position: relative;
     transition: transform 0.2s, opacity 0.2s;
 }
 
-/* 1枚目（基準となるカード）：少し上に浮き上がり、最下層の基準になる */
 #hand .card.selected-stack:not(.stacked-offset) {
     transform: translateY(-22px) scale(1.02) !important;
     border-color: #38bdf8 !important;
@@ -1196,13 +1332,10 @@ button:disabled {
     opacity: 1 !important;
 }
 
-/* 2枚目以降：1枚目の位置（基準地）へ引き寄せられ、そこから右へ順番に重なる */
 #hand .card.selected-stack.stacked-offset {
-    /* 元の横並びのレイアウト位置から、「1枚目の位置との差分」を打ち消しつつ、右へ綺麗に束ねる */
     transform: translate(var(--offset-x, 0px), -22px) scale(1.02) !important;
     border-color: #38bdf8 !important;
     box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    /* 選択された順番（stack-order）が後になるほどレイヤー的に上へ */
     z-index: calc(30 + var(--stack-order, 1)) !important;
     opacity: 1 !important;
 }
@@ -1211,7 +1344,6 @@ button:disabled {
    スマホ・狭い画面向けのレイアウト最適化
 ==================================== */
 @media screen and (max-width: 768px) {
-    /* 1. 上部システムメニューバーのコンパクト化 */
     #top-menu-bar {
         padding: 0 10px;
         height: 42px;
@@ -1231,7 +1363,6 @@ button:disabled {
         font-size: 10px;
     }
 
-    /* 2. ロビー画面のルール切替スイッチをスマホでも見やすく整理 */
     #lobby-screen {
         margin-top: 70px;
         margin-bottom: 40px;
@@ -1246,18 +1377,17 @@ button:disabled {
     }
 
     .toggle-container {
-        justify-content: flex-start; /* 左寄せにしてテキストが長くなっても折り返しやすくする */
+        justify-content: flex-start;
         text-align: left;
         gap: 10px;
         padding: 4px 0;
     }
 
     .toggle-label {
-        font-size: 12px; /* スマホで文字がはみ出さないよう少しコンパクトに */
+        font-size: 12px;
         line-height: 1.3;
     }
 
-    /* 3. ゲーム中のメイン情報ボックスの幅調整 */
     #game-info {
         width: 100% !important;
         padding: 12px;
