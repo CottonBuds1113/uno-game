@@ -1332,8 +1332,9 @@ button:disabled {
     opacity: 1 !important;
 }
 
-#hand .card.selected-stack.stacked-offset {
-    transform: translate(var(--offset-x, 0px), -22px) scale(1.02) !important;
+#hand .card.selected-stack.stacked-offset,
+#hand .card.selected-stack.stacked-offset:hover {
+    transform: translate(var(--offset-x, 0px), var(--offset-y, -22px)) scale(1.02) !important;
     border-color: #38bdf8 !important;
     box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
     z-index: calc(30 + var(--stack-order, 1)) !important;
@@ -1438,22 +1439,4 @@ button:disabled {
 
 #hand .card:not(.selected-stack):hover {
     transform: translateY(-8px) scale(1.03);
-}
-
-#hand .card.selected-stack:not(.stacked-offset),
-#hand .card.selected-stack:not(.stacked-offset):hover {
-    transform: translateY(-22px) scale(1.02) !important;
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    z-index: 20 !important;
-    opacity: 1 !important;
-}
-
-#hand .card.selected-stack.stacked-offset,
-#hand .card.selected-stack.stacked-offset:hover {
-    transform: translate(var(--offset-x, 0px), -22px) scale(1.02) !important;
-    border-color: #38bdf8 !important;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    z-index: calc(30 + var(--stack-order, 1)) !important;
-    opacity: 1 !important;
 }

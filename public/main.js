@@ -870,12 +870,10 @@ function renderHand() {
                             });
                             renderHand();
                         } else {
-                            // 同じ値でなくてもグループ選択（selectedCardIndices）は維持して再描画
                             renderHand();
                         }
                     } 
                     else {
-                        // 場でも対象カードでもない場所で離した場合もグループ選択は維持したまま戻す
                         const finalRect = cardDiv.getBoundingClientRect();
                         clone.style.transition = 'transform 0.22s ease, opacity 0.22s ease, left 0.22s ease, top 0.22s ease';
                         clone.style.left = `${finalRect.left}px`;
@@ -926,7 +924,7 @@ function renderHand() {
         handDiv.appendChild(cardDiv);
     });
 
-    // 2. 【精密位置合わせ】：1枚目の位置へスライドし、右へ綺麗に重ねる束（スタック）を形成
+    // 2. 【精密位置合わせ】：1枚目の位置を基準に、変な場所へ飛ばず右へ綺麗に重ねる
     if (selectedCardIndices.length > 0) {
         const cardElements = handDiv.querySelectorAll('.card');
         const firstIdx = selectedCardIndices[0];
@@ -944,19 +942,24 @@ function renderHand() {
             firstCardEl.appendChild(badge1);
 
             const firstRect = firstCardEl.getBoundingClientRect();
+            const overlapStep = window.innerWidth <= 768 ? 18 : 22;
 
             selectedCardIndices.forEach((sIdx, order) => {
                 if (order > 0) {
                     const targetEl = cardElements[sIdx];
                     if (targetEl) {
                         const targetRect = targetEl.getBoundingClientRect();
-                        const diffX = (firstRect.left - targetRect.left) + (order * 24);
+                        const desiredLeft = firstRect.left + (order * overlapStep);
+                        const desiredTop = firstRect.top - 22;
+                        const diffX = desiredLeft - targetRect.left;
+                        const diffY = desiredTop - targetRect.top;
                         
                         targetEl.classList.remove('card-draw-anim');
                         targetEl.classList.add('selected-stack', 'stacked-offset');
                         targetEl.style.setProperty('--offset-x', `${diffX}px`);
+                        targetEl.style.setProperty('--offset-y', `${diffY}px`);
                         targetEl.style.setProperty('--stack-order', `${order}`);
-                        targetEl.style.transform = `translate(${diffX}px, -22px) scale(1.02)`;
+                        targetEl.style.transform = `translate(${diffX}px, ${diffY}px) scale(1.02)`;
                         targetEl.style.zIndex = `${30 + order}`;
                         targetEl.style.opacity = '1';
 
