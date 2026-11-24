@@ -54,6 +54,9 @@ const translations = {
         penaltyNotice: (name) => `⚠️ ${name} はUNO宣言を忘れていたためペナルティ！(2枚ドロー)`,
         stackPenalty: (name, n) => `💥 ${name} は累積ペナルティで ${n}枚 引かされました！`,
         winnerMsg: (name) => `${name} の勝利です！`,
+        sysJoinSpectator: (name) => `👀 ${name} が観戦者として参加しました`,
+        sysJoinPlayer: (name) => `🎉 ${name} が部屋に参加しました`,
+        sysLeave: (name) => `🚪 ${name} が退出しました`,
 
         chatHeading: "💬 ルームチャット",
         chatLimitNote: "最大200文字",
@@ -127,6 +130,9 @@ const translations = {
         penaltyNotice: (name) => `⚠️ ${name} forgot to call UNO and drew 2 penalty cards!`,
         stackPenalty: (name, n) => `💥 ${name} took ${n} cards from the accumulated penalty!`,
         winnerMsg: (name) => `${name} wins the game!`,
+        sysJoinSpectator: (name) => `👀 ${name} joined as a spectator.`,
+        sysJoinPlayer: (name) => `🎉 ${name} joined the room.`,
+        sysLeave: (name) => `🚪 ${name} left.`,
 
         chatHeading: "💬 Room Chat",
         chatLimitNote: "Max 200 chars",
@@ -398,7 +404,26 @@ if (chatForm && chatInput) {
 }
 
 socket.on('chatMessage', (payload) => {
-    if (!payload || !payload.text) return;
+    if (!payload) return;
+
+    if (payload.sysEvent) {
+        const { type, name } = payload.sysEvent;
+        let resolvedText = '';
+
+        if (type === 'joinSpectator') resolvedText = t('sysJoinSpectator', name);
+        else if (type === 'joinPlayer') resolvedText = t('sysJoinPlayer', name);
+        else if (type === 'leave') resolvedText = t('sysLeave', name);
+
+        if (resolvedText) {
+            appendChatMessage({
+                ...payload,
+                text: resolvedText
+            });
+        }
+        return;
+    }
+
+    if (!payload.text) return;
     appendChatMessage(payload);
 });
 
@@ -493,7 +518,6 @@ function joinRoom() {
 
     const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
     const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
-    // スイッチ ON = 対戦参加（観戦しない）、スイッチ OFF = 観戦する
     const isJoinAsPlayer = spectatorCheckbox ? spectatorCheckbox.checked : true;
     const allowSpectator = !isJoinAsPlayer;
     const isSameCardStackEnabled = sameCardCheckbox ? sameCardCheckbox.checked : true;

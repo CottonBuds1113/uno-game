@@ -82,6 +82,16 @@ function emitSystemChat(roomId, text) {
     });
 }
 
+function emitSystemEventChat(roomId, eventType, name) {
+    io.to(roomId).emit('chatMessage', {
+        senderId: 'system',
+        senderName: 'SYSTEM',
+        role: 'system',
+        sysEvent: { type: eventType, name },
+        timestamp: Date.now()
+    });
+}
+
 function findMemberInRoom(room, socketId) {
     const player = room.players.find(p => p.id === socketId);
     if (player) return { name: player.name, role: 'player' };
@@ -152,7 +162,7 @@ io.on('connection', (socket) => {
             room.spectators.push(spectator);
 
             socket.emit('joinedRoom', cleanRoomId);
-            emitSystemChat(cleanRoomId, `👀 ${specName} が観戦として参加しました`);
+            emitSystemEventChat(cleanRoomId, 'joinSpectator', specName);
             updateGameState(cleanRoomId);
             return;
         }
@@ -173,7 +183,7 @@ io.on('connection', (socket) => {
         room.players.push(player);
 
         socket.emit('joinedRoom', cleanRoomId);
-        emitSystemChat(cleanRoomId, `🎉 ${playerName} が部屋に参加しました`);
+        emitSystemEventChat(cleanRoomId, 'joinPlayer', playerName);
         updateGameState(cleanRoomId);
     });
 
@@ -404,7 +414,7 @@ io.on('connection', (socket) => {
             delete rooms[playerRoomId];
         } else {
             if (member) {
-                emitSystemChat(playerRoomId, `🚪 ${member.name} が退出しました`);
+                emitSystemEventChat(playerRoomId, 'leave', member.name);
             }
             if (room.players.length > 0) {
                 if (room.turn >= room.players.length) room.turn = 0;
