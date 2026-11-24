@@ -12,9 +12,6 @@ body {
     padding-top: 74px;
 }
 
-/* ====================================
-   上部システムメニューバー & モーダル
-==================================== */
 #top-menu-bar {
     position: fixed;
     top: 0;
@@ -33,11 +30,9 @@ body {
     z-index: 4000;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     
-    /* ▼ 追加：上からスライドインするための動き（ロビー画面の速度と合わせる） */
     transition: transform 0.85s cubic-bezier(0.05, 0.9, 0.1, 1), opacity 0.85s ease;
 }
 
-/* ▼ 追加：隠れているときは上に引っ込んでおく */
 #top-menu-bar.lobby-hidden {
     transform: translateY(-100%);
     opacity: 0;
@@ -281,14 +276,12 @@ button:disabled {
     align-items: center;
     margin-top: 5px;
     
-    /* ▼ スペースを確保したまま見えなくする設定 */
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
 }
 
-/* 選択されているときだけ表示するクラス */
 #multi-play-controls.active {
     visibility: visible;
     opacity: 1;
@@ -434,6 +427,185 @@ button:disabled {
 @keyframes drawPopIn {
     0% { transform: translateY(30px) scale(0.5); opacity: 0; }
     100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+#room-chat-area {
+    background-image: url('brown-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    border: 1.5px solid rgba(255, 255, 255, 0.65);
+    border-radius: 12px;
+    padding: 14px 16px;
+    width: 680px;
+    max-width: 100%;
+    margin: 22px auto 24px auto;
+    box-sizing: border-box;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+    text-align: left;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.chat-title {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #f8f9fa;
+}
+
+.chat-limit-note {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.chat-messages {
+    height: 170px;
+    overflow-y: auto;
+    background: rgba(10, 12, 18, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scroll-behavior: smooth;
+}
+
+.chat-empty {
+    margin: auto;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 13px;
+    text-align: center;
+}
+
+.chat-msg-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 85%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 6px 10px;
+    word-break: break-word;
+}
+
+.chat-msg-row.self {
+    align-self: flex-end;
+    align-items: flex-end;
+    background: rgba(46, 204, 113, 0.18);
+    border-color: rgba(46, 204, 113, 0.45);
+}
+
+.chat-msg-row.system {
+    align-self: center;
+    max-width: 100%;
+    background: transparent;
+    border: none;
+    padding: 2px 6px;
+}
+
+.chat-system-text {
+    font-size: 12px;
+    color: #f1c40f;
+    text-align: center;
+}
+
+.chat-msg-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    margin-bottom: 2px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.chat-sender {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.chat-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.chat-badge.self {
+    background: rgba(46, 204, 113, 0.35);
+    color: #a7f3d0;
+}
+
+.chat-badge.spec {
+    background: rgba(52, 152, 219, 0.35);
+    color: #bae6fd;
+}
+
+.chat-time {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-msg-body {
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: #f8fafc;
+    white-space: pre-wrap;
+}
+
+.chat-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+#chat-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background-color: #1a1208;
+    color: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#chat-input:focus {
+    outline: none;
+    border-color: #2ecc71;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.35);
+}
+
+.chat-send-btn {
+    background-color: #2ecc71;
+    color: #0b140e;
+    border: none;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.chat-send-btn:hover {
+    background-color: #4ade80;
+    transform: translateY(-1px);
+}
+
+.chat-send-btn:active {
+    transform: scale(0.97);
 }
 
 #color-picker-modal, #swap-player-modal {
@@ -664,7 +836,6 @@ button:disabled {
     100% { opacity: 0; }
 }
 
-/* ▼ UNO宣言時の流れるテロップ演出（中心で止まらず、中央付近で一度だけスローダウンするアニメーション） */
 .uno-scrolling-text {
     position: absolute;
     white-space: nowrap;
@@ -909,7 +1080,6 @@ button:disabled {
     transform: scale(1.05);
 }
 
-/* スポットライト演出用 */
 #lobby-spotlight {
     position: fixed;
     top: 0;
@@ -980,7 +1150,6 @@ button:disabled {
     }
 }
 
-/* 汎用ローディング画面 */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -1036,7 +1205,6 @@ button:disabled {
     100% { opacity: 1; }
 }
 
-/* 場のカードエリア：ドラッグ中のカードが重なったときのハイライト演出 */
 #discard-area.drag-over {
     border-color: #2ecc71 !important;
     background-color: rgba(46, 204, 113, 0.25) !important;
@@ -1049,9 +1217,6 @@ button:disabled {
     transition: all 0.15s ease;
 }
 
-/* ====================================
-   Renderターミナル風：準備完了・スタート画面
-==================================== */
 .ready-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -1072,20 +1237,17 @@ button:disabled {
 }
 
 .ready-card {
-    /* ターミナル風のダークウィンドウ */
     background: #0d1117;
-    border: 1px solid rgba(56, 189, 248, 0.3); /* シアン/ブルー系のシャープな枠線 */
+    border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 8px;
     padding: 35px 40px;
-    text-align: left; /* ターミナルっぽく左寄せに */
+    text-align: left;
     box-shadow: 0 0 30px rgba(124, 58, 237, 0.2), 0 20px 40px rgba(0, 0, 0, 0.8);
     color: #e2e8f0;
     max-width: 440px;
     width: 90%;
     transform: scale(0.95);
     animation: readyCardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
-    /* ターミナルらしい等幅フォントを適用 */
     font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
 }
 
@@ -1105,7 +1267,7 @@ button:disabled {
     font-size: 20px;
     margin: 0 0 14px 0;
     letter-spacing: 1px;
-    color: #38bdf8; /* ターミナルブルー */
+    color: #38bdf8;
     font-weight: 700;
 }
 
@@ -1117,7 +1279,6 @@ button:disabled {
 }
 
 #enter-lobby-btn {
-    /* パープルとブルーのグラデーション、コンソール風の角丸少なめ */
     background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
     color: #ffffff;
     width: 100%;
@@ -1140,7 +1301,6 @@ button:disabled {
     transform: translateY(-1px);
 }
 
-/* ▼ OKボタンが押されるまでロビーや演出を完全に隠すクラス */
 .lobby-hidden {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -1148,11 +1308,6 @@ button:disabled {
     animation: none !important;
 }
 
-/* ====================================
-   複数枚重ね出し（選択中）のカード演出
-==================================== */
-
-/* 選択中のカード束の順番バッジ（1枚目、2枚目...） */
 .stack-order-badge {
     position: absolute;
     top: -6px;
@@ -1172,22 +1327,15 @@ button:disabled {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
-/* ====================================
-   手札内での重ね合わせ・ずらしビジュアル（束・スタック構造）
-==================================== */
-
-/* 手札コンテナを基準位置とする */
 #hand {
     position: relative;
 }
 
-/* 選択されていない通常のカード */
 #hand .card {
     position: relative;
     transition: transform 0.2s, opacity 0.2s;
 }
 
-/* 1枚目（基準となるカード）：少し上に浮き上がり、最下層の基準になる */
 #hand .card.selected-stack:not(.stacked-offset) {
     transform: translateY(-22px) scale(1.02) !important;
     border-color: #38bdf8 !important;
@@ -1196,22 +1344,15 @@ button:disabled {
     opacity: 1 !important;
 }
 
-/* 2枚目以降：1枚目の位置（基準地）へ引き寄せられ、そこから右へ順番に重なる */
 #hand .card.selected-stack.stacked-offset {
-    /* 元の横並びのレイアウト位置から、「1枚目の位置との差分」を打ち消しつつ、右へ綺麗に束ねる */
     transform: translate(var(--offset-x, 0px), -22px) scale(1.02) !important;
     border-color: #38bdf8 !important;
     box-shadow: 0 0 20px rgba(56, 189, 248, 0.9), 0 10px 20px rgba(0, 0, 0, 0.6) !important;
-    /* 選択された順番（stack-order）が後になるほどレイヤー的に上へ */
     z-index: calc(30 + var(--stack-order, 1)) !important;
     opacity: 1 !important;
 }
 
-/* ====================================
-   スマホ・狭い画面向けのレイアウト最適化
-==================================== */
 @media screen and (max-width: 768px) {
-    /* 1. 上部システムメニューバーのコンパクト化 */
     #top-menu-bar {
         padding: 0 10px;
         height: 42px;
@@ -1231,7 +1372,6 @@ button:disabled {
         font-size: 10px;
     }
 
-    /* 2. ロビー画面のルール切替スイッチをスマホでも見やすく整理 */
     #lobby-screen {
         margin-top: 70px;
         margin-bottom: 40px;
@@ -1246,21 +1386,29 @@ button:disabled {
     }
 
     .toggle-container {
-        justify-content: flex-start; /* 左寄せにしてテキストが長くなっても折り返しやすくする */
+        justify-content: flex-start;
         text-align: left;
         gap: 10px;
         padding: 4px 0;
     }
 
     .toggle-label {
-        font-size: 12px; /* スマホで文字がはみ出さないよう少しコンパクトに */
+        font-size: 12px;
         line-height: 1.3;
     }
 
-    /* 3. ゲーム中のメイン情報ボックスの幅調整 */
     #game-info {
         width: 100% !important;
         padding: 12px;
         box-sizing: border-box;
+    }
+
+    #room-chat-area {
+        width: 100% !important;
+        padding: 12px;
+    }
+
+    .chat-messages {
+        height: 145px;
     }
 }

@@ -1,8 +1,5 @@
 const socket = io();
 
-// ====================================
-// 多言語辞書 (i18n) 定義
-// ====================================
 const translations = {
     ja: {
         manualBtn: "📖 マニュアル",
@@ -56,6 +53,14 @@ const translations = {
         penaltyNotice: (name) => `⚠️ ${name} はUNO宣言を忘れていたためペナルティ！(2枚ドロー)`,
         stackPenalty: (name, n) => `💥 ${name} は累積ペナルティで ${n}枚 引かされました！`,
         winnerMsg: (name) => `${name} の勝利です！`,
+
+        chatHeading: "💬 ルームチャット",
+        chatLimitNote: "最大200文字",
+        chatEmpty: "まだメッセージはありません",
+        chatPlaceholder: "メッセージを入力...",
+        chatSendBtn: "送信",
+        chatYouTag: "自分",
+        chatSpectatorTag: "観戦",
 
         readyTitle: "準備完了",
         readyDesc: "サーバーの接続が完了しました。<br>ボタンを押してゲームへ進んでください。",
@@ -120,6 +125,14 @@ const translations = {
         penaltyNotice: (name) => `⚠️ ${name} forgot to call UNO and drew 2 penalty cards!`,
         stackPenalty: (name, n) => `💥 ${name} took ${n} cards from the accumulated penalty!`,
         winnerMsg: (name) => `${name} wins the game!`,
+
+        chatHeading: "💬 Room Chat",
+        chatLimitNote: "Max 200 chars",
+        chatEmpty: "No messages yet",
+        chatPlaceholder: "Type a message...",
+        chatSendBtn: "Send",
+        chatYouTag: "You",
+        chatSpectatorTag: "Spec",
 
         readyTitle: "Ready",
         readyDesc: "Server connection established.<br>Click below to enter the lobby.",
@@ -192,6 +205,10 @@ const colorPickerModal = document.getElementById('color-picker-modal');
 const swapPlayerModal = document.getElementById('swap-player-modal');
 const swapPlayerButtons = document.getElementById('swap-player-buttons');
 
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+const chatMessages = document.getElementById('chat-messages');
+
 const unoOverlay = document.getElementById('uno-overlay');
 const unoScrollingText = document.getElementById('uno-scrolling-text');
 let unoAnimationTimeout = null;
@@ -207,7 +224,6 @@ let selectedSwapTargetId = null;
 let hasDeclaredUnoThisTurn = false;
 let isMeSpectator = false;
 
-// ▼ 重ね出し用の状態変数
 let selectedCardIndices = [];
 let isSameCardStackEnabledRoom = true;
 let pendingPlayIndices = [];
@@ -223,6 +239,93 @@ function hideLoading() {
     const overlay = document.getElementById('loading-overlay');
     if (overlay) overlay.classList.add('hidden');
 }
+
+function formatChatTime(ts) {
+    const date = ts ? new Date(ts) : new Date();
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+}
+
+function appendChatMessage({ senderId, senderName, role, text, timestamp }) {
+    if (!chatMessages) return;
+
+    const emptyEl = document.getElementById('chat-empty-msg');
+    if (emptyEl) emptyEl.remove();
+
+    const isSystem = role === 'system' || senderId === 'system';
+    const isMe = !isSystem && senderId === myId;
+
+    const row = document.createElement('div');
+    row.className = 'chat-msg-row';
+    if (isSystem) row.classList.add('system');
+    if (isMe) row.classList.add('self');
+
+    if (isSystem) {
+        const sysSpan = document.createElement('span');
+        sysSpan.className = 'chat-system-text';
+        sysSpan.textContent = text;
+        row.appendChild(sysSpan);
+    } else {
+        const meta = document.createElement('div');
+        meta.className = 'chat-msg-meta';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'chat-sender';
+        nameSpan.textContent = senderName || 'Player';
+        meta.appendChild(nameSpan);
+
+        if (isMe) {
+            const youBadge = document.createElement('span');
+            youBadge.className = 'chat-badge self';
+            youBadge.textContent = t('chatYouTag');
+            meta.appendChild(youBadge);
+        } else if (role === 'spectator') {
+            const specBadge = document.createElement('span');
+            specBadge.className = 'chat-badge spec';
+            specBadge.textContent = t('chatSpectatorTag');
+            meta.appendChild(specBadge);
+        }
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'chat-time';
+        timeSpan.textContent = formatChatTime(timestamp);
+        meta.appendChild(timeSpan);
+
+        const body = document.createElement('div');
+        body.className = 'chat-msg-body';
+        body.textContent = text;
+
+        row.appendChild(meta);
+        row.appendChild(body);
+    }
+
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+if (chatForm && chatInput) {
+    chatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!currentRoomId) return;
+
+        const msg = chatInput.value.trim();
+        if (!msg) return;
+
+        socket.emit('sendChatMessage', {
+            roomId: currentRoomId,
+            text: msg
+        });
+
+        chatInput.value = '';
+        chatInput.focus();
+    });
+}
+
+socket.on('chatMessage', (payload) => {
+    if (!payload || !payload.text) return;
+    appendChatMessage(payload);
+});
 
 const menuManualBtn = document.getElementById('menu-manual-btn');
 const menuSettingsBtn = document.getElementById('menu-settings-btn');
@@ -323,6 +426,10 @@ function joinRoom() {
     const isSameCardStackEnabled = sameCardCheckbox ? sameCardCheckbox.checked : true;
 
     currentRoomId = roomId;
+    if (chatMessages) {
+        chatMessages.innerHTML = `<div id="chat-empty-msg" class="chat-empty">${t('chatEmpty')}</div>`;
+    }
+
     showLoading(currentLang === 'en' ? 'Joining room...' : '卓を囲んでいます...');
     socket.emit('joinRoom', { 
         roomId, 
@@ -336,10 +443,12 @@ function joinRoom() {
 
 socket.on('joinedRoom', (roomId) => {
     hideLoading();
+    currentRoomId = roomId;
     lobbyScreen.style.display = 'none';
     gameScreen.style.display = 'block';
     currentRoomDisplay.innerText = `Room ID: ${roomId}`;
     if (menuLeaveBtn) menuLeaveBtn.style.display = 'inline-block';
+    if (chatInput) chatInput.focus();
 });
 
 socket.on('unoDeclared', ({ playerId, playerName }) => {
@@ -546,7 +655,8 @@ socket.on('gameState', (data) => {
             if (data.topCard.color === 'wild') {
                 const colorNames = currentLang === 'en' ? { red: 'Red', blue: 'Blue', green: 'Green', yellow: 'Yellow' } : { red: '赤', blue: '青', green: '緑', yellow: '黄' };
                 const designated = colorNames[data.topCard.designatedColor] || (currentLang === 'en' ? 'Red' : '赤');
-                center.innerText = `${label}\n(${designated})`;
+                center.innerText = `${label}
+(${designated})`;
                 center.style.fontSize = '16px';
             }
 
@@ -578,7 +688,6 @@ socket.on('announce', (msg) => {
     turnInfo.style.color = "#f1c40f";
 });
 
-// ▼ 重ね出しコントロールバーの表示更新（スペースを維持したままactiveクラスで切り替え）
 function updateMultiPlayControls() {
     const controls = document.getElementById('multi-play-controls');
     const playBtn = document.getElementById('play-selected-btn');
@@ -649,7 +758,6 @@ function renderHand() {
 
     const firstSelectedCard = selectedCardIndices.length > 0 ? myCurrentHand[selectedCardIndices[0]] : null;
 
-    // 1. まず手札のカード要素をすべて生成して配置
     myCurrentHand.forEach((card, index) => {
         const cardDiv = createCardElement(card);
         const selectionOrder = selectedCardIndices.indexOf(index);
@@ -693,7 +801,6 @@ function renderHand() {
         if (!isPlayable && !canBeClickedToStack) {
             cardDiv.classList.add('disabled');
         } else {
-            // ▼ マウス＆スマホタッチ対応の共通ドラッグ関数
             const startDragOrTouch = (clientX, clientY) => {
                 const startX = clientX;
                 const startY = clientY;
@@ -746,7 +853,6 @@ function renderHand() {
                         discardArea.classList.toggle('drag-over', isInsideNow);
                     }
 
-                    // 他の手札カードに触れたときのハイライト
                     const handCards = handDiv.querySelectorAll('.card');
                     handCards.forEach((cEl, cIdx) => {
                         if (cIdx !== index) {
@@ -874,7 +980,6 @@ function renderHand() {
                 }
             };
 
-            // クリック操作
             cardDiv.onclick = () => {
                 if (!isSameCardStackEnabledRoom) {
                     executePlayCards([index]);
@@ -893,7 +998,6 @@ function renderHand() {
         handDiv.appendChild(cardDiv);
     });
 
-    // 2. 【精密位置合わせ】：1枚目の位置へスライドし、右へ綺麗に重ねる束（スタック）を形成
     if (selectedCardIndices.length > 0) {
         const cardElements = handDiv.querySelectorAll('.card');
         const firstIdx = selectedCardIndices[0];

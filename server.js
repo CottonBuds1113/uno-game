@@ -72,6 +72,24 @@ function getOrCreateRoom(roomId, isStackEnabled = true, allowSwapCard = true, al
     return rooms[roomId];
 }
 
+function emitSystemChat(roomId, text) {
+    io.to(roomId).emit('chatMessage', {
+        senderId: 'system',
+        senderName: 'SYSTEM',
+        role: 'system',
+        text,
+        timestamp: Date.now()
+    });
+}
+
+function findMemberInRoom(room, socketId) {
+    const player = room.players.find(p => p.id === socketId);
+    if (player) return { name: player.name, role: 'player' };
+    const spectator = room.spectators.find(s => s.id === socketId);
+    if (spectator) return { name: spectator.name, role: 'spectator' };
+    return null;
+}
+
 function updateGameState(roomId) {
     const room = rooms[roomId];
     if (!room) return;
@@ -112,22 +130,30 @@ io.on('connection', (socket) => {
     let playerRoomId = null;
 
     socket.on('joinRoom', ({ roomId, name, isStackEnabled, allowSwapCard, allowSpectator, isSameCardStackEnabled }) => {
-        playerRoomId = roomId;
-        socket.join(roomId);
+        if (!roomId || typeof roomId !== 'string') return;
+        const cleanRoomId = roomId.trim().slice(0, 32);
+        if (!cleanRoomId) return;
 
-        const room = getOrCreateRoom(roomId, isStackEnabled, allowSwapCard, allowSpectator, isSameCardStackEnabled);
+        playerRoomId = cleanRoomId;
+        socket.join(cleanRoomId);
+
+        const room = getOrCreateRoom(cleanRoomId, isStackEnabled, allowSwapCard, allowSpectator, isSameCardStackEnabled);
         room.allowSpectator = allowSpectator;
 
+        const cleanName = (typeof name === 'string' && name.trim()) ? name.trim().slice(0, 20) : '';
+
         if (room.players.length > 0 && room.allowSpectator) {
+            const specName = cleanName || `Spectator ${room.spectators.length + 1}`;
             const spectator = {
                 id: socket.id,
-                name: name || `Spectator ${room.spectators.length + 1}`,
+                name: specName,
                 isSpectator: true
             };
             room.spectators.push(spectator);
 
-            socket.emit('joinedRoom', roomId);
-            updateGameState(roomId);
+            socket.emit('joinedRoom', cleanRoomId);
+            emitSystemChat(cleanRoomId, `👀 ${specName} が観戦として参加しました`);
+            updateGameState(cleanRoomId);
             return;
         }
 
@@ -135,18 +161,42 @@ io.on('connection', (socket) => {
             room.deck = createDeck(room.allowSwapCard);
         }
 
+        const playerName = cleanName || `Player ${room.players.length + 1}`;
         const playerHand = room.deck.splice(0, 7);
         const player = {
             id: socket.id,
-            name: name || `Player ${room.players.length + 1}`,
+            name: playerName,
             hand: playerHand,
             hasCalledUno: false,
             isSpectator: false
         };
         room.players.push(player);
 
-        socket.emit('joinedRoom', roomId);
-        updateGameState(roomId);
+        socket.emit('joinedRoom', cleanRoomId);
+        emitSystemChat(cleanRoomId, `🎉 ${playerName} が部屋に参加しました`);
+        updateGameState(cleanRoomId);
+    });
+
+    socket.on('sendChatMessage', ({ roomId, text }) => {
+        const targetRoomId = (typeof roomId === 'string' && roomId.trim()) ? roomId.trim() : playerRoomId;
+        if (!targetRoomId || !rooms[targetRoomId]) return;
+        if (typeof text !== 'string') return;
+
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        const safeText = trimmed.slice(0, 200);
+
+        const room = rooms[targetRoomId];
+        const member = findMemberInRoom(room, socket.id);
+        if (!member) return;
+
+        io.to(targetRoomId).emit('chatMessage', {
+            senderId: socket.id,
+            senderName: member.name,
+            role: member.role,
+            text: safeText,
+            timestamp: Date.now()
+        });
     });
 
     socket.on('callUno', ({ roomId }) => {
@@ -179,7 +229,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ▼ 【新規対応】 複数枚同時出し（playCards）の処理
     socket.on('playCards', ({ roomId, cardIndices, chosenColor, targetPlayerId }) => {
         const room = rooms[roomId];
         if (!room || room.players.length === 0) return;
@@ -188,18 +237,14 @@ io.on('connection', (socket) => {
 
         const player = room.players[room.turn];
 
-        // インデックスの妥当性＆重複チェック
-        const sortedIndices = [...cardIndices].sort((a, b) => b - a); // 降順にして後ろから安全にスプライスする
+        const sortedIndices = [...cardIndices].sort((a, b) => b - a);
         for (let idx of sortedIndices) {
             if (idx < 0 || idx >= player.hand.length) return;
         }
 
-        // 選択されたカードオブジェクトの抽出
         const cardsToPlay = sortedIndices.map(idx => player.hand[idx]);
         const topCard = room.discardPile[room.discardPile.length - 1];
-
-        // 1枚目のカードが場に出せるか判定
-        const firstCard = cardsToPlay[cardsToPlay.length - 1]; // 元のインデックス順の先頭
+        const firstCard = cardsToPlay[cardsToPlay.length - 1];
 
         if (room.isStackEnabled && room.pendingDrawCount > 0) {
             if (topCard.value === 'draw2') {
@@ -224,7 +269,6 @@ io.on('connection', (socket) => {
 
         if (!isPlayable) return;
 
-        // 2枚目以降がすべて「同じ数字・記号」かチェック（重ね出しルール有効時）
         if (cardsToPlay.length > 1) {
             if (!room.isSameCardStackEnabled) return;
             const baseVal = firstCard.value;
@@ -233,19 +277,16 @@ io.on('connection', (socket) => {
             }
         }
 
-        // 手札からカードを削除して場に出す
         let playedCards = [];
         for (let idx of sortedIndices) {
             playedCards.unshift(player.hand.splice(idx, 1)[0]);
         }
 
-        // 最後のカード（またはワイルド）に対して指定色や特殊効果を適用
         const lastPlayedCard = playedCards[playedCards.length - 1];
         if (lastPlayedCard.color === 'wild') {
             lastPlayedCard.designatedColor = chosenColor || 'red';
         }
 
-        // スワップカードが含まれていた場合（先頭のカードがスワップの場合など）
         if (lastPlayedCard.value === 'swap' && targetPlayerId) {
             const targetPlayer = room.players.find(p => p.id === targetPlayerId);
             if (targetPlayer) {
@@ -256,7 +297,6 @@ io.on('connection', (socket) => {
             }
         }
 
-        // 捨札の山に追加
         room.discardPile.push(...playedCards);
 
         if (player.hand.length > 1) {
@@ -269,7 +309,6 @@ io.on('connection', (socket) => {
             return;
         }
 
-        // 特殊効果の重ねがけ処理
         let skipCount = 0;
         let totalDraw2 = 0;
         let totalDraw4 = 0;
@@ -295,7 +334,6 @@ io.on('connection', (socket) => {
             }
         });
 
-        // スタックOFF時のドロー処理（合算枚数分を次プレイヤーに引かせる）
         if (!room.isStackEnabled && (totalDraw2 > 0 || totalDraw4 > 0)) {
             const nextTurnIndex = (room.turn + room.direction + room.players.length) % room.players.length;
             const nextPlayer = room.players[nextTurnIndex];
@@ -308,7 +346,6 @@ io.on('connection', (socket) => {
             skipCount += 1;
         }
 
-        // ターン進行 ＋ スキップ回数分の加算
         room.turn += room.direction * (1 + skipCount);
 
         updateGameState(roomId);
@@ -341,6 +378,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         if (!playerRoomId || !rooms[playerRoomId]) return;
         const room = rooms[playerRoomId];
+        const member = findMemberInRoom(room, socket.id);
         
         const playerIndex = room.players.findIndex(p => p.id === socket.id);
         if (playerIndex !== -1) {
@@ -353,6 +391,9 @@ io.on('connection', (socket) => {
         if (room.players.length === 0 && room.spectators.length === 0) {
             delete rooms[playerRoomId];
         } else {
+            if (member) {
+                emitSystemChat(playerRoomId, `🚪 ${member.name} が退出しました`);
+            }
             if (room.players.length > 0) {
                 if (room.turn >= room.players.length) room.turn = 0;
                 updateGameState(playerRoomId);
