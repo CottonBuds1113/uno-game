@@ -245,9 +245,35 @@ function hideLoading() {
     if (overlay) overlay.classList.add('hidden');
 }
 
+// モーダルを上からスライド表示する共通関数
+function openSlideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    const card = modal.querySelector('.sys-modal-card');
+    modal.classList.remove('is-open');
+    modal.style.display = 'flex';
+
+    if (card) {
+        card.style.animation = 'none';
+        void card.offsetWidth;
+        card.style.animation = '';
+    }
+
+    requestAnimationFrame(() => {
+        modal.classList.add('is-open');
+    });
+}
+
+window.closeSysModal = function(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.style.display = 'none';
+};
+
 // 通知モーダルを表示する関数
 function showNoticeModal(message, title = null) {
-    const modal = document.getElementById('notice-modal');
     const titleEl = document.getElementById('notice-modal-title');
     const msgEl = document.getElementById('notice-modal-message');
     const okBtn = document.getElementById('notice-modal-ok-btn');
@@ -261,14 +287,11 @@ function showNoticeModal(message, title = null) {
     if (okBtn) {
         okBtn.innerText = 'OK';
     }
-    if (modal) {
-        modal.style.display = 'flex';
-    }
+    openSlideModal('notice-modal');
 }
 
 // 退出確認モーダルを開く関数
 function openLeaveConfirmModal() {
-    const modal = document.getElementById('leave-confirm-modal');
     const titleEl = document.getElementById('leave-confirm-title');
     const msgEl = document.getElementById('leave-confirm-message');
     const yesBtn = document.getElementById('confirm-leave-yes-btn');
@@ -292,9 +315,7 @@ function openLeaveConfirmModal() {
         noBtn.innerText = t('cancelBtn');
     }
 
-    if (modal) {
-        modal.style.display = 'flex';
-    }
+    openSlideModal('leave-confirm-modal');
 }
 
 function formatChatTime(ts) {
@@ -392,13 +413,13 @@ const brightnessSlider = document.getElementById('brightness-slider');
 const brightnessVal = document.getElementById('brightness-val');
 
 if (menuManualBtn) {
-    menuManualBtn.onclick = () => { document.getElementById('manual-modal').style.display = 'flex'; };
+    menuManualBtn.onclick = () => { openSlideModal('manual-modal'); };
 }
 if (menuSettingsBtn) {
-    menuSettingsBtn.onclick = () => { document.getElementById('settings-modal').style.display = 'flex'; };
+    menuSettingsBtn.onclick = () => { openSlideModal('settings-modal'); };
 }
 if (menuCreditsBtn) {
-    menuCreditsBtn.onclick = () => { document.getElementById('credits-modal').style.display = 'flex'; };
+    menuCreditsBtn.onclick = () => { openSlideModal('credits-modal'); };
 }
 if (menuLeaveBtn) {
     menuLeaveBtn.onclick = () => {
@@ -413,11 +434,6 @@ if (brightnessSlider) {
         document.body.style.filter = `brightness(${val}%)`;
     };
 }
-
-window.closeSysModal = function(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'none';
-};
 
 socket.on('connect', () => {
     myId = socket.id;
