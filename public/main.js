@@ -15,13 +15,14 @@ const translations = {
         roomPlaceholder: "ルームID (例: 1234)",
         ruleStack: "ドロー累積（+2/+4重ね）ルール",
         ruleSwap: "手札交換カード（スワップ）を含める",
-        ruleSpectator: "観戦モード（オン）｜途中参加モード（オフ）",
+        ruleSpectator: "⚠観戦モード（オン）｜途中参加モード（オフ）⚠",
         ruleSameCard: "同一カードの重ね出しルール（複数枚同時出し）",
         createRoomBtn: "部屋を作る",
         joinRoomBtn: "部屋に参加",
         waitingText: "待機中...",
         playersHeading: "プレイヤー",
         discardLabel: "場のカード:",
+        deckLabel: "山札:",
         drawBtn: "山札から引く",
         myHandHeading: "あなたの手札",
         clearSelectionBtn: "選択解除",
@@ -40,7 +41,7 @@ const translations = {
         gameOverTitle: "GAME OVER",
         lobbyBtn: "ロビーへ",
         spectatorModeMsg: "👀 観戦モード中（試合を観戦しています）",
-        myTurnMsg: "★ あなたの番です！出せるカードを場に出すか、山札から引くか、UNOボタンを押してください",
+        myTurnMsg: "あなたの番です！\n出せるカードを場に出すか、山札から引くか、UNOボタンを押してください",
         drawNBtn: (n) => `山札から ${n}枚引く`,
         stackWarning: (n) => `🔥 警告！+${n} 累積中！カードを重ねるか、山札から ${n}枚 引いてください`,
         stackingInfo: (n) => `⚠️ 現在 +${n} 累積中！次の人の運命やいかに…`,
@@ -87,13 +88,14 @@ const translations = {
         roomPlaceholder: "Room ID (e.g. 1234)",
         ruleStack: "Stacking Rule (+2 / +4)",
         ruleSwap: "Include Swap Hand Cards",
-        ruleSpectator: "Spectator Mode (On) | Late-Join (Off)",
+        ruleSpectator: "⚠Spectator Mode (On) | Late-Join (Off)⚠",
         ruleSameCard: "Stack Same Cards Rule (Play Multiple Cards)",
         createRoomBtn: "Create Room",
         joinRoomBtn: "Join Room",
         waitingText: "Waiting...",
         playersHeading: "Players",
         discardLabel: "Discard Pile:",
+        deckLabel: "Deck:",
         drawBtn: "Draw Card",
         myHandHeading: "Your Hand",
         clearSelectionBtn: "Clear Selection",
@@ -112,7 +114,7 @@ const translations = {
         gameOverTitle: "GAME OVER",
         lobbyBtn: "Back to Lobby",
         spectatorModeMsg: "👀 Spectating mode (Watching the match)",
-        myTurnMsg: "★ Your turn! Play a card, draw from the deck, or call UNO!",
+        myTurnMsg: "Your turn! \nPlay a card, draw from the deck, or call UNO!",
         drawNBtn: (n) => `Draw ${n} cards`,
         stackWarning: (n) => `🔥 Warning! +${n} stacking! Play a card or draw ${n} cards`,
         stackingInfo: (n) => `⚠️ +${n} penalty stacked! What's next...`,
@@ -136,7 +138,7 @@ const translations = {
 
         readyTitle: "Ready",
         readyDesc: "Server connection established.<br>Click below to enter the lobby.",
-        enterLobbyBtn: "OK (Enter Lobby)",        
+        enterLobbyBtn: "OK (Enter Lobby)",
 
         manualHtml: `
             <li><strong>Basic Rules:</strong> Match top card by color, number, or symbol.</li>
@@ -189,6 +191,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 const lobbyScreen = document.getElementById('lobby-screen');
 const gameScreen = document.getElementById('game-screen');
+const roomChatArea = document.getElementById('room-chat-area');
 
 const playerNameInput = document.getElementById('player-name-input');
 const roomIdInput = document.getElementById('room-id-input');
@@ -200,6 +203,7 @@ const turnInfo = document.getElementById('turn-info');
 const playerList = document.getElementById('player-list');
 const handDiv = document.getElementById('hand');
 const drawBtn = document.getElementById('draw-btn');
+const drawBtnLabel = document.getElementById('draw-btn-label');
 const unoBtn = document.getElementById('uno-btn');
 const colorPickerModal = document.getElementById('color-picker-modal');
 const swapPlayerModal = document.getElementById('swap-player-modal');
@@ -218,6 +222,7 @@ let currentRoomId = '';
 let latestGameState = null;
 let myCurrentHand = [];
 let previousHandLength = 0;
+let lastRenderedHandLength = 0;
 let pendingWildCardIndex = null;
 let pendingSwapCardIndex = null;
 let selectedSwapTargetId = null;
@@ -367,7 +372,7 @@ window.closeSysModal = function(modalId) {
 socket.on('connect', () => {
     myId = socket.id;
     hideLoading();
-    
+
     const readyScreen = document.getElementById('ready-screen');
     if (readyScreen) {
         readyScreen.classList.remove('hidden');
@@ -383,11 +388,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 readyScreen.classList.add('hidden');
             }
 
-            const lobbyScreen = document.getElementById('lobby-screen');
+            const lobbyScreenEl = document.getElementById('lobby-screen');
             const spotlight = document.getElementById('lobby-spotlight');
             const topMenu = document.getElementById('top-menu-bar');
-            
-            if (lobbyScreen) lobbyScreen.classList.remove('lobby-hidden');
+
+            if (lobbyScreenEl) lobbyScreenEl.classList.remove('lobby-hidden');
             if (spotlight) spotlight.classList.remove('lobby-hidden');
             if (topMenu) topMenu.classList.remove('lobby-hidden');
         };
@@ -419,7 +424,7 @@ function joinRoom() {
     const swapCheckbox = document.getElementById('swap-rule-checkbox');
     const spectatorCheckbox = document.getElementById('spectator-rule-checkbox');
     const sameCardCheckbox = document.getElementById('stack-same-card-checkbox');
-    
+
     const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
     const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
     const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
@@ -431,13 +436,13 @@ function joinRoom() {
     }
 
     showLoading(currentLang === 'en' ? 'Joining room...' : '卓を囲んでいます...');
-    socket.emit('joinRoom', { 
-        roomId, 
-        name, 
-        isStackEnabled, 
-        allowSwapCard, 
-        allowSpectator, 
-        isSameCardStackEnabled 
+    socket.emit('joinRoom', {
+        roomId,
+        name,
+        isStackEnabled,
+        allowSwapCard,
+        allowSpectator,
+        isSameCardStackEnabled
     });
 }
 
@@ -446,6 +451,7 @@ socket.on('joinedRoom', (roomId) => {
     currentRoomId = roomId;
     lobbyScreen.style.display = 'none';
     gameScreen.style.display = 'block';
+    if (roomChatArea) roomChatArea.style.display = 'block';
     currentRoomDisplay.innerText = `Room ID: ${roomId}`;
     if (menuLeaveBtn) menuLeaveBtn.style.display = 'inline-block';
     if (chatInput) chatInput.focus();
@@ -533,30 +539,40 @@ socket.on('gameState', (data) => {
     if (isMeSpectator) {
         turnInfo.innerText = t('spectatorModeMsg');
         turnInfo.style.color = "#3498db";
+        turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
         drawBtn.style.display = 'none';
     } else {
-        drawBtn.style.display = 'inline-block';
+        drawBtn.style.display = 'flex';
         const isMyTurn = (data.currentTurnId === myId);
 
         if (isMyTurn) {
+            turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
+            void turnInfo.offsetWidth;
+            turnInfo.classList.add('my-turn-active');
+
             if (data.pendingDrawCount > 0) {
+                turnInfo.classList.add('my-turn-penalty');
                 turnInfo.innerText = t('stackWarning', data.pendingDrawCount);
-                turnInfo.style.color = "#e74c3c";
-                drawBtn.innerText = t('drawNBtn', data.pendingDrawCount);
+                turnInfo.style.color = "#fecaca";
+                if (drawBtnLabel) drawBtnLabel.innerText = t('drawNBtn', data.pendingDrawCount);
+                drawBtn.classList.add('penalty-draw');
             } else {
                 turnInfo.innerText = t('myTurnMsg');
-                turnInfo.style.color = "#2ecc71";
-                drawBtn.innerText = t('drawBtn');
+                turnInfo.style.color = "#a7f3d0";
+                if (drawBtnLabel) drawBtnLabel.innerText = t('drawBtn');
+                drawBtn.classList.remove('penalty-draw');
             }
             drawBtn.disabled = false;
         } else {
+            turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
             if (data.pendingDrawCount > 0) {
                 turnInfo.innerText = t('stackingInfo', data.pendingDrawCount);
             } else {
                 turnInfo.innerText = t('waitingTurn');
             }
             turnInfo.style.color = "#ecf0f1";
-            drawBtn.innerText = t('drawBtn');
+            if (drawBtnLabel) drawBtnLabel.innerText = t('drawBtn');
+            drawBtn.classList.remove('penalty-draw');
             drawBtn.disabled = true;
         }
     }
@@ -686,6 +702,7 @@ socket.on('yourHand', (hand) => {
 socket.on('announce', (msg) => {
     turnInfo.innerText = msg;
     turnInfo.style.color = "#f1c40f";
+    turnInfo.classList.remove('my-turn-active', 'my-turn-penalty');
 });
 
 function updateMultiPlayControls() {
@@ -720,10 +737,12 @@ if (playSelectedBtn) {
 
 function renderHand() {
     handDiv.innerHTML = '';
-    
+
     if (isMeSpectator) {
         unoBtn.style.display = 'none';
         selectedCardIndices = [];
+        lastRenderedHandLength = 0;
+        previousHandLength = 0;
         updateMultiPlayControls();
         const msg = document.createElement('p');
         msg.innerText = t('noHandSpectator');
@@ -734,7 +753,7 @@ function renderHand() {
 
     if (!myCurrentHand) return;
 
-    selectedCardIndices = selectedCardIndices.filter(idx => idx < myCurrentHand.length);
+    selectedCardIndices = selectedCardIndices.filter(idx => idx >= 0 && idx < myCurrentHand.length);
     updateMultiPlayControls();
 
     const remainingAfterPlay = myCurrentHand.length - selectedCardIndices.length;
@@ -754,8 +773,8 @@ function renderHand() {
     const isMyTurn = latestGameState && (latestGameState.currentTurnId === myId);
     const topCard = latestGameState ? latestGameState.topCard : null;
     const pendingDrawCount = latestGameState ? latestGameState.pendingDrawCount : 0;
-    const isNewCardDrawn = myCurrentHand.length > previousHandLength && previousHandLength !== 0;
 
+    const hasDrawnNewCard = myCurrentHand.length > lastRenderedHandLength && lastRenderedHandLength > 0;
     const firstSelectedCard = selectedCardIndices.length > 0 ? myCurrentHand[selectedCardIndices[0]] : null;
 
     myCurrentHand.forEach((card, index) => {
@@ -763,7 +782,7 @@ function renderHand() {
         const selectionOrder = selectedCardIndices.indexOf(index);
         const isSelected = selectionOrder !== -1;
 
-        if (isNewCardDrawn && index === myCurrentHand.length - 1) {
+        if (hasDrawnNewCard && index === myCurrentHand.length - 1 && !isSelected) {
             cardDiv.classList.add('card-draw-anim');
         }
 
@@ -796,7 +815,12 @@ function renderHand() {
             }
         }
 
-        const canBeClickedToStack = selectedCardIndices.length > 0 && !isSelected && isSameCardStackEnabledRoom && (card.value === firstSelectedCard.value);
+        const canBeClickedToStack =
+            selectedCardIndices.length > 0 &&
+            !isSelected &&
+            isSameCardStackEnabledRoom &&
+            firstSelectedCard &&
+            (card.value === firstSelectedCard.value);
 
         if (!isPlayable && !canBeClickedToStack) {
             cardDiv.classList.add('disabled');
@@ -808,54 +832,67 @@ function renderHand() {
                 const offsetX = clientX - rect.left;
                 const offsetY = clientY - rect.top;
 
-                const targetIndices = isSelected ? [...selectedCardIndices] : [index];
-
-                const clone = cardDiv.cloneNode(true);
-                clone.style.position = 'fixed';
-                clone.style.left = `${rect.left}px`;
-                clone.style.top = `${rect.top}px`;
-                clone.style.zIndex = '1000';
-                clone.style.cursor = 'grabbing';
-                clone.style.pointerEvents = 'none';
-
-                if (targetIndices.length > 1) {
-                    const countTag = document.createElement('div');
-                    countTag.className = 'stack-order-badge';
-                    countTag.style.width = '28px';
-                    countTag.style.height = '28px';
-                    countTag.innerText = `×${targetIndices.length}`;
-                    clone.appendChild(countTag);
-                }
-
-                document.body.appendChild(clone);
-                cardDiv.style.opacity = '0.2';
+                const isDraggingGroup = isSelected && selectedCardIndices.length > 0;
+                const targetIndices = isDraggingGroup ? [...selectedCardIndices] : [index];
 
                 let hasMoved = false;
+                let clone = null;
                 const discardArea = document.getElementById('discard-area');
+
+                const createCloneIfNeeded = () => {
+                    if (clone) return;
+                    clone = cardDiv.cloneNode(true);
+                    clone.classList.remove('card-draw-anim', 'selected-stack', 'stacked-offset');
+                    clone.style.position = 'fixed';
+                    clone.style.left = `${rect.left}px`;
+                    clone.style.top = `${rect.top}px`;
+                    clone.style.margin = '0';
+                    clone.style.zIndex = '2000';
+                    clone.style.cursor = 'grabbing';
+                    clone.style.pointerEvents = 'none';
+                    clone.style.transition = 'none';
+                    clone.style.transform = 'scale(1.12)';
+
+                    if (targetIndices.length > 1) {
+                        const countTag = document.createElement('div');
+                        countTag.className = 'stack-order-badge';
+                        countTag.style.width = '28px';
+                        countTag.style.height = '28px';
+                        countTag.innerText = `×${targetIndices.length}`;
+                        clone.appendChild(countTag);
+                    }
+
+                    document.body.appendChild(clone);
+                    cardDiv.style.opacity = '0.2';
+                };
 
                 function onMove(moveX, moveY) {
                     const dx = Math.abs(moveX - startX);
                     const dy = Math.abs(moveY - startY);
-                    if (dx > 5 || dy > 5) hasMoved = true;
+                    if (dx > 6 || dy > 6) {
+                        hasMoved = true;
+                        createCloneIfNeeded();
+                    }
+
+                    if (!hasMoved || !clone) return;
 
                     clone.style.left = `${moveX - offsetX}px`;
                     clone.style.top = `${moveY - offsetY}px`;
-                    clone.style.transform = `scale(1.12)`;
 
                     if (discardArea) {
                         const dropRect = discardArea.getBoundingClientRect();
                         const isInsideNow = (
-                            moveX >= dropRect.left &&
-                            moveX <= dropRect.right &&
-                            moveY >= dropRect.top &&
-                            moveY <= dropRect.bottom
+                            moveX >= dropRect.left - 10 &&
+                            moveX <= dropRect.right + 10 &&
+                            moveY >= dropRect.top - 10 &&
+                            moveY <= dropRect.bottom + 10
                         );
                         discardArea.classList.toggle('drag-over', isInsideNow);
                     }
 
                     const handCards = handDiv.querySelectorAll('.card');
                     handCards.forEach((cEl, cIdx) => {
-                        if (cIdx !== index) {
+                        if (!targetIndices.includes(cIdx)) {
                             const cRect = cEl.getBoundingClientRect();
                             const isOverCard = (
                                 moveX >= cRect.left &&
@@ -863,7 +900,7 @@ function renderHand() {
                                 moveY >= cRect.top &&
                                 moveY <= cRect.bottom
                             );
-                            if (isOverCard && isSameCardStackEnabledRoom && myCurrentHand[cIdx].value === card.value) {
+                            if (isOverCard && isSameCardStackEnabledRoom && myCurrentHand[cIdx] && myCurrentHand[cIdx].value === card.value) {
                                 cEl.style.boxShadow = '0 0 15px #38bdf8';
                                 cEl.style.borderColor = '#38bdf8';
                             } else if (!selectedCardIndices.includes(cIdx)) {
@@ -887,18 +924,33 @@ function renderHand() {
                         cEl.style.borderColor = '';
                     });
 
-                    const dropRect = discardArea.getBoundingClientRect();
-                    const isInsideDiscard = (
-                        endX >= dropRect.left &&
-                        endX <= dropRect.right &&
-                        endY >= dropRect.top &&
-                        endY <= dropRect.bottom
+                    if (!hasMoved || !clone) {
+                        cardDiv.style.opacity = '1';
+                        if (!isSameCardStackEnabledRoom) {
+                            executePlayCards([index]);
+                            return;
+                        }
+                        if (isSelected) {
+                            selectedCardIndices = selectedCardIndices.filter(i => i !== index);
+                        } else {
+                            selectedCardIndices.push(index);
+                        }
+                        renderHand();
+                        return;
+                    }
+
+                    const dropRect = discardArea ? discardArea.getBoundingClientRect() : null;
+                    const isInsideDiscard = dropRect && (
+                        endX >= dropRect.left - 10 &&
+                        endX <= dropRect.right + 10 &&
+                        endY >= dropRect.top - 10 &&
+                        endY <= dropRect.bottom + 10
                     );
 
                     let targetCardIndex = -1;
                     const handCards = handDiv.querySelectorAll('.card');
                     handCards.forEach((cEl, cIdx) => {
-                        if (cIdx !== index) {
+                        if (!targetIndices.includes(cIdx)) {
                             const cRect = cEl.getBoundingClientRect();
                             if (
                                 endX >= cRect.left &&
@@ -911,18 +963,18 @@ function renderHand() {
                         }
                     });
 
-                    if (isInsideDiscard && hasMoved) {
-                        document.body.removeChild(clone);
+                    if (isInsideDiscard) {
+                        if (document.body.contains(clone)) document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
-                        const indicesToPlay = selectedCardIndices.length > 0 ? selectedCardIndices : [index];
+                        const indicesToPlay = selectedCardIndices.length > 0 ? [...selectedCardIndices] : [...targetIndices];
                         executePlayCards(indicesToPlay);
-                    } 
+                    }
                     else if (targetCardIndex !== -1 && isSameCardStackEnabledRoom) {
-                        document.body.removeChild(clone);
+                        if (document.body.contains(clone)) document.body.removeChild(clone);
                         cardDiv.style.opacity = '1';
 
                         const targetCard = myCurrentHand[targetCardIndex];
-                        if (targetCard.value === card.value) {
+                        if (targetCard && targetCard.value === card.value) {
                             if (!selectedCardIndices.includes(targetCardIndex)) {
                                 selectedCardIndices.push(targetCardIndex);
                             }
@@ -932,20 +984,22 @@ function renderHand() {
                                 }
                             });
                             renderHand();
+                        } else {
+                            renderHand();
                         }
-                    } 
+                    }
                     else {
                         const finalRect = cardDiv.getBoundingClientRect();
-                        clone.style.transition = 'transform 0.25s ease, opacity 0.25s ease, left 0.25s ease, top 0.25s ease';
+                        clone.style.transition = 'transform 0.22s ease, opacity 0.22s ease, left 0.22s ease, top 0.22s ease';
                         clone.style.left = `${finalRect.left}px`;
                         clone.style.top = `${finalRect.top}px`;
                         clone.style.transform = 'scale(1)';
-                        clone.style.opacity = '0.7';
+                        clone.style.opacity = '0';
 
                         setTimeout(() => {
-                            if (document.body.contains(clone)) document.body.removeChild(clone);
+                            if (clone && document.body.contains(clone)) document.body.removeChild(clone);
                             cardDiv.style.opacity = '1';
-                        }, 250);
+                        }, 220);
                     }
                 }
 
@@ -970,6 +1024,7 @@ function renderHand() {
             };
 
             cardDiv.onmousedown = (e) => {
+                if (e.button !== 0) return;
                 e.preventDefault();
                 startDragOrTouch(e.clientX, e.clientY);
             };
@@ -978,20 +1033,6 @@ function renderHand() {
                 if (e.touches.length > 0) {
                     startDragOrTouch(e.touches[0].clientX, e.touches[0].clientY);
                 }
-            };
-
-            cardDiv.onclick = () => {
-                if (!isSameCardStackEnabledRoom) {
-                    executePlayCards([index]);
-                    return;
-                }
-
-                if (isSelected) {
-                    selectedCardIndices = selectedCardIndices.filter(i => i !== index);
-                } else {
-                    selectedCardIndices.push(index);
-                }
-                renderHand();
             };
         }
 
@@ -1004,26 +1045,35 @@ function renderHand() {
         const firstCardEl = cardElements[firstIdx];
 
         if (firstCardEl) {
+            firstCardEl.classList.remove('card-draw-anim');
             firstCardEl.classList.add('selected-stack');
             firstCardEl.style.zIndex = '20';
             firstCardEl.style.opacity = '1';
-            
+
             const badge1 = document.createElement('div');
             badge1.className = 'stack-order-badge';
             badge1.innerText = '1';
             firstCardEl.appendChild(badge1);
 
             const firstRect = firstCardEl.getBoundingClientRect();
+            const overlapStep = window.innerWidth <= 768 ? 18 : 22;
 
             selectedCardIndices.forEach((sIdx, order) => {
                 if (order > 0) {
                     const targetEl = cardElements[sIdx];
                     if (targetEl) {
                         const targetRect = targetEl.getBoundingClientRect();
-                        const diffX = (firstRect.left - targetRect.left) + (order * 24);
-                        
+                        const desiredLeft = firstRect.left + (order * overlapStep);
+                        const desiredTop = firstRect.top - 22;
+                        const diffX = desiredLeft - targetRect.left;
+                        const diffY = desiredTop - targetRect.top;
+
+                        targetEl.classList.remove('card-draw-anim');
                         targetEl.classList.add('selected-stack', 'stacked-offset');
-                        targetEl.style.transform = `translate(${diffX}px, -22px) scale(1.02)`;
+                        targetEl.style.setProperty('--offset-x', `${diffX}px`);
+                        targetEl.style.setProperty('--offset-y', `${diffY}px`);
+                        targetEl.style.setProperty('--stack-order', `${order}`);
+                        targetEl.style.transform = `translate(${diffX}px, ${diffY}px) scale(1.02)`;
                         targetEl.style.zIndex = `${30 + order}`;
                         targetEl.style.opacity = '1';
 
@@ -1037,6 +1087,7 @@ function renderHand() {
         }
     }
 
+    lastRenderedHandLength = myCurrentHand.length;
     previousHandLength = myCurrentHand.length;
 }
 
@@ -1091,13 +1142,13 @@ function openSwapPlayerModal() {
 
 window.selectWildColor = function(color) {
     colorPickerModal.style.display = 'none';
-    
+
     if (pendingPlayIndices.length > 0) {
-        socket.emit('playCards', { 
-            roomId: currentRoomId, 
-            cardIndices: pendingPlayIndices, 
-            chosenColor: color, 
-            targetPlayerId: selectedSwapTargetId 
+        socket.emit('playCards', {
+            roomId: currentRoomId,
+            cardIndices: pendingPlayIndices,
+            chosenColor: color,
+            targetPlayerId: selectedSwapTargetId
         });
         pendingPlayIndices = [];
         selectedSwapTargetId = null;
@@ -1118,14 +1169,64 @@ window.cancelSwapModal = function() {
     selectedSwapTargetId = null;
 };
 
+function playDrawCardAnimation(count = 1) {
+    const handContainer = document.getElementById('hand');
+    const sourceEl = document.getElementById('draw-btn') || document.getElementById('discard-area');
+    if (!handContainer || !sourceEl) return;
+
+    const safeCount = Math.min(Math.max(Number(count) || 1, 1), 6);
+    const startRect = sourceEl.getBoundingClientRect();
+    const handRect = handContainer.getBoundingClientRect();
+
+    const targetX = handRect.left + handRect.width / 2 - 37;
+    const targetY = handRect.top + Math.min(handRect.height / 2, 60) - 55;
+
+    for (let i = 0; i < safeCount; i++) {
+        setTimeout(() => {
+            const flyer = document.createElement('div');
+            flyer.className = 'flying-draw-card';
+
+            const startX = startRect.left + startRect.width / 2 - 37;
+            const startY = startRect.top + startRect.height / 2 - 55;
+
+            flyer.style.left = `${startX}px`;
+            flyer.style.top = `${startY}px`;
+            flyer.style.transform = 'scale(0.85) rotate(-8deg)';
+            flyer.style.opacity = '0.95';
+
+            document.body.appendChild(flyer);
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    flyer.style.transition = 'transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), left 0.36s cubic-bezier(0.22, 1, 0.36, 1), top 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease';
+                    flyer.style.left = `${targetX + (i - (safeCount - 1) / 2) * 18}px`;
+                    flyer.style.top = `${targetY}px`;
+                    flyer.style.transform = 'scale(1) rotate(0deg)';
+                    flyer.style.opacity = '0.2';
+                });
+            });
+
+            setTimeout(() => {
+                if (flyer.parentNode) {
+                    flyer.parentNode.removeChild(flyer);
+                }
+            }, 380);
+        }, i * 85);
+    }
+}
+
 drawBtn.onclick = () => {
+    const drawAmount = (latestGameState && latestGameState.pendingDrawCount > 0)
+        ? latestGameState.pendingDrawCount
+        : 1;
+    playDrawCardAnimation(drawAmount);
     socket.emit('drawCard', { roomId: currentRoomId });
 };
 
 socket.on('gameOver', (message) => {
     const resultModal = document.getElementById('result-modal');
     const winnerText = document.getElementById('winner-text');
-    
+
     if (resultModal && winnerText) {
         winnerText.textContent = message;
         resultModal.classList.add('show');

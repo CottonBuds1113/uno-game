@@ -41,7 +41,7 @@
         <div class="lobby-form">
             <input type="text" id="player-name-input" data-i18n-placeholder="namePlaceholder" placeholder="プレイヤー名を入力" />
             <input type="text" id="room-id-input" data-i18n-placeholder="roomPlaceholder" placeholder="ルームID (例: 1234)" />
-            
+
             <div class="toggle-container">
                 <label class="toggle-switch">
                     <input type="checkbox" id="stack-rule-checkbox" checked>
@@ -63,7 +63,7 @@
                     <input type="checkbox" id="spectator-rule-checkbox" checked>
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label" data-i18n="ruleSpectator">観戦モード（オン）｜途中参加モード（オフ）</span>
+                <span class="toggle-label" data-i18n="ruleSpectator">⚠観戦モード（オン）｜途中参加モード（オフ）⚠</span>
             </div>
 
             <div class="toggle-container">
@@ -83,26 +83,40 @@
 
     <div id="game-screen" style="display: none;">
         <h2 id="current-room-display">ルーム ID: -</h2>
-        
+
         <div id="game-info">
             <p id="turn-info" data-i18n="waitingText">待機中...</p>
             <div id="player-list-area">
                 <h4 data-i18n="playersHeading">プレイヤー</h4>
                 <ul id="player-list"></ul>
             </div>
-            
-            <p data-i18n="discardLabel">場のカード:</p>
-            <div id="discard-area">
-                <div id="top-card" class="card">?</div>
+
+            <!-- ▼ 場のカード と 山札デッキ を横並びに配置 -->
+            <div class="table-center-row">
+                <div class="pile-box">
+                    <p class="pile-label" data-i18n="discardLabel">場のカード:</p>
+                    <div id="discard-area">
+                        <div id="top-card" class="card">?</div>
+                    </div>
+                </div>
+
+                <div class="pile-box">
+                    <p class="pile-label" data-i18n="deckLabel">山札:</p>
+                    <button id="draw-btn" class="deck-pile-btn" type="button">
+                        <span class="deck-uno-mark">UNO</span>
+                        <span id="draw-btn-label" class="deck-action-badge" data-i18n="drawBtn">山札から引く</span>
+                    </button>
+                </div>
             </div>
 
-            <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
-                <div style="display: flex; gap: 10px; align-items: center; justify-content: center;">
-                    <button id="draw-btn" data-i18n="drawBtn">山札から引く</button>
+            <!-- ▼ 「UNO!」と複数枚出し用のコントロールをまとめる -->
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                <div style="display: flex; gap: 10px; align-items: center; justify-content: center; min-height: 44px;">
                     <button id="uno-btn" class="uno-call-btn" style="display: none;" disabled>🔥 UNO!</button>
                 </div>
 
-                <div id="multi-play-controls" style="display: none; gap: 8px; justify-content: center; align-items: center; margin-top: 5px;">
+                <!-- ▼ 選択中だけ現れるコントロールバー -->
+                <div id="multi-play-controls" style="gap: 8px; justify-content: center; align-items: center; margin-top: 5px;">
                     <button id="play-selected-btn" class="primary-btn" style="background-color: #2ecc71; color: #000; font-size: 14px; padding: 10px 16px;">選択したカードを場に出す (0枚)</button>
                     <button id="clear-selection-btn" class="primary-btn" style="background-color: #e74c3c; font-size: 12px; padding: 8px 12px;" data-i18n="clearSelectionBtn">選択解除</button>
                 </div>
@@ -111,28 +125,28 @@
 
         <h3 data-i18n="myHandHeading">あなたの手札</h3>
         <div id="hand"></div>
-
-        <section id="room-chat-area" aria-label="Room Chat">
-            <div class="chat-header">
-                <span class="chat-title" data-i18n="chatHeading">💬 ルームチャット</span>
-                <span class="chat-limit-note" data-i18n="chatLimitNote">最大200文字</span>
-            </div>
-            <div id="chat-messages" class="chat-messages">
-                <div id="chat-empty-msg" class="chat-empty" data-i18n="chatEmpty">まだメッセージはありません</div>
-            </div>
-            <form id="chat-form" class="chat-form">
-                <input
-                    type="text"
-                    id="chat-input"
-                    maxlength="200"
-                    autocomplete="off"
-                    data-i18n-placeholder="chatPlaceholder"
-                    placeholder="メッセージを入力..."
-                />
-                <button type="submit" id="chat-send-btn" class="chat-send-btn" data-i18n="chatSendBtn">送信</button>
-            </form>
-        </section>
     </div>
+
+    <section id="room-chat-area" aria-label="Room Chat" style="display: none;">
+        <div class="chat-header">
+            <span class="chat-title" data-i18n="chatHeading">💬 ルームチャット</span>
+            <span class="chat-limit-note" data-i18n="chatLimitNote">最大200文字</span>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            <div id="chat-empty-msg" class="chat-empty" data-i18n="chatEmpty">まだメッセージはありません</div>
+        </div>
+        <form id="chat-form" class="chat-form">
+            <input
+                type="text"
+                id="chat-input"
+                maxlength="200"
+                autocomplete="off"
+                data-i18n-placeholder="chatPlaceholder"
+                placeholder="メッセージを入力..."
+            />
+            <button type="submit" id="chat-send-btn" class="chat-send-btn" data-i18n="chatSendBtn">送信</button>
+        </form>
+    </section>
 
     <div id="color-picker-modal">
         <div class="color-picker-content">

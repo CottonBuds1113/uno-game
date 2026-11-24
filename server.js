@@ -101,11 +101,11 @@ function updateGameState(roomId) {
     }
 
     io.to(roomId).emit('gameState', {
-        players: room.players.map(p => ({ 
-            id: p.id, 
-            name: p.name, 
+        players: room.players.map(p => ({
+            id: p.id,
+            name: p.name,
             handCount: p.hand.length,
-            hasCalledUno: p.hasCalledUno 
+            hasCalledUno: p.hasCalledUno
         })),
         spectators: room.spectators.map(s => ({
             id: s.id,
@@ -217,7 +217,7 @@ io.on('connection', (socket) => {
         const room = rooms[roomId];
         if (!room) return;
         const targetPlayer = room.players.find(p => p.id === targetPlayerId);
-        
+
         if (targetPlayer && targetPlayer.hand.length === 1 && !targetPlayer.hasCalledUno) {
             for (let i = 0; i < 2; i++) {
                 if (room.deck.length === 0) room.deck = createDeck(room.allowSwapCard);
@@ -233,61 +233,73 @@ io.on('connection', (socket) => {
         const room = rooms[roomId];
         if (!room || room.players.length === 0) return;
         if (!room.players[room.turn] || room.players[room.turn].id !== socket.id) return;
-        if (!cardIndices || cardIndices.length === 0) return;
+        if (!Array.isArray(cardIndices) || cardIndices.length === 0) return;
 
         const player = room.players[room.turn];
 
-        const sortedIndices = [...cardIndices].sort((a, b) => b - a);
-        for (let idx of sortedIndices) {
-            if (idx < 0 || idx >= player.hand.length) return;
+        const uniqueIndices = [...new Set(cardIndices)];
+        for (let idx of uniqueIndices) {
+            if (typeof idx !== 'number' || idx < 0 || idx >= player.hand.length) return;
         }
 
-        const cardsToPlay = sortedIndices.map(idx => player.hand[idx]);
+        const orderedCardsToPlay = uniqueIndices.map(idx => player.hand[idx]);
         const topCard = room.discardPile[room.discardPile.length - 1];
-        const firstCard = cardsToPlay[cardsToPlay.length - 1];
 
-        if (room.isStackEnabled && room.pendingDrawCount > 0) {
-            if (topCard.value === 'draw2') {
-                const isCanStack = (firstCard.value === 'draw2' || firstCard.value === 'wild_draw4');
-                if (!isCanStack) return;
-            } else if (topCard.value === 'wild_draw4') {
-                const isCanStack = (firstCard.value === 'wild_draw4');
-                if (!isCanStack) return;
+        const canCardBePlayedOnTop = (card) => {
+            if (room.isStackEnabled && room.pendingDrawCount > 0) {
+                if (topCard.value === 'draw2') {
+                    return (card.value === 'draw2' || card.value === 'wild_draw4');
+                }
+                if (topCard.value === 'wild_draw4') {
+                    return (card.value === 'wild_draw4');
+                }
             }
+            if (card.color === 'wild') return true;
+            if (topCard.color === 'wild') return (card.color === topCard.designatedColor);
+            return (card.color === topCard.color) || (card.value === topCard.value);
+        };
+
+        const firstPlayablePos = orderedCardsToPlay.findIndex(c => canCardBePlayedOnTop(c));
+        if (firstPlayablePos === -1) {
+            socket.emit('announce', '⚠️ 選択したカードは現在の場のカードに出せません');
+            return;
         }
 
-        let isPlayable = false;
-        if (firstCard.color === 'wild') {
-            isPlayable = true;
-        } else if (topCard.color === 'wild') {
-            isPlayable = (firstCard.color === topCard.designatedColor);
-        } else {
-            const isSameColor = firstCard.color === topCard.color;
-            const isSameValue = (firstCard.value === topCard.value);
-            isPlayable = isSameColor || isSameValue;
-        }
-
-        if (!isPlayable) return;
+        const reorderedIndices = [
+            uniqueIndices[firstPlayablePos],
+            ...uniqueIndices.filter((_, i) => i !== firstPlayablePos)
+        ];
+        const cardsToPlay = reorderedIndices.map(idx => player.hand[idx]);
+        const baseCard = cardsToPlay[0];
 
         if (cardsToPlay.length > 1) {
-            if (!room.isSameCardStackEnabled) return;
-            const baseVal = firstCard.value;
+            if (!room.isSameCardStackEnabled) {
+                socket.emit('announce', '⚠️ この部屋では同一カードの重ね出しが無効です');
+                return;
+            }
+            const baseVal = baseCard.value;
             for (let c of cardsToPlay) {
-                if (c.value !== baseVal) return;
+                if (c.value !== baseVal) {
+                    socket.emit('announce', '⚠️ 同じ数字・記号のカードのみ重ね出しできます');
+                    return;
+                }
             }
         }
 
-        let playedCards = [];
-        for (let idx of sortedIndices) {
-            playedCards.unshift(player.hand.splice(idx, 1)[0]);
+        const descendingIndices = [...reorderedIndices].sort((a, b) => b - a);
+        const splicedMap = new Map();
+        for (let idx of descendingIndices) {
+            splicedMap.set(idx, player.hand.splice(idx, 1)[0]);
+        }
+        const playedCards = reorderedIndices.map(idx => splicedMap.get(idx));
+
+        const wildCard = playedCards.find(c => c.color === 'wild');
+        if (wildCard) {
+            wildCard.designatedColor = chosenColor || 'red';
         }
 
-        const lastPlayedCard = playedCards[playedCards.length - 1];
-        if (lastPlayedCard.color === 'wild') {
-            lastPlayedCard.designatedColor = chosenColor || 'red';
-        }
-
-        if (lastPlayedCard.value === 'swap' && targetPlayerId) {
+        const swapCard = playedCards.find(c => c.value === 'swap');
+        if (swapCard && targetPlayerId) {
             const targetPlayer = room.players.find(p => p.id === targetPlayerId);
             if (targetPlayer) {
                 const tempHand = player.hand;
@@ -379,7 +391,7 @@ io.on('connection', (socket) => {
         if (!playerRoomId || !rooms[playerRoomId]) return;
         const room = rooms[playerRoomId];
         const member = findMemberInRoom(room, socket.id);
-        
+
         const playerIndex = room.players.findIndex(p => p.id === socket.id);
         if (playerIndex !== -1) {
             room.players.splice(playerIndex, 1);
