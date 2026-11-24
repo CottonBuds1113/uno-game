@@ -245,6 +245,58 @@ function hideLoading() {
     if (overlay) overlay.classList.add('hidden');
 }
 
+// 通知モーダルを表示する関数
+function showNoticeModal(message, title = null) {
+    const modal = document.getElementById('notice-modal');
+    const titleEl = document.getElementById('notice-modal-title');
+    const msgEl = document.getElementById('notice-modal-message');
+    const okBtn = document.getElementById('notice-modal-ok-btn');
+
+    if (titleEl) {
+        titleEl.innerText = title || (currentLang === 'en' ? 'ℹ️ Notice' : 'ℹ️ お知らせ');
+    }
+    if (msgEl) {
+        msgEl.innerText = message;
+    }
+    if (okBtn) {
+        okBtn.innerText = 'OK';
+    }
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// 退出確認モーダルを開く関数
+function openLeaveConfirmModal() {
+    const modal = document.getElementById('leave-confirm-modal');
+    const titleEl = document.getElementById('leave-confirm-title');
+    const msgEl = document.getElementById('leave-confirm-message');
+    const yesBtn = document.getElementById('confirm-leave-yes-btn');
+    const noBtn = document.getElementById('confirm-leave-no-btn');
+
+    if (titleEl) {
+        titleEl.innerText = currentLang === 'en' ? '🚪 Leave Room' : '🚪 退出確認';
+    }
+    if (msgEl) {
+        msgEl.innerText = currentLang === 'en'
+            ? 'Leave the room and return to lobby?'
+            : '現在の部屋から退出してロビーに戻りますか？';
+    }
+    if (yesBtn) {
+        yesBtn.innerText = currentLang === 'en' ? 'Leave' : '退出する';
+        yesBtn.onclick = () => {
+            location.reload();
+        };
+    }
+    if (noBtn) {
+        noBtn.innerText = t('cancelBtn');
+    }
+
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
 function formatChatTime(ts) {
     const date = ts ? new Date(ts) : new Date();
     const hh = String(date.getHours()).padStart(2, '0');
@@ -350,9 +402,7 @@ if (menuCreditsBtn) {
 }
 if (menuLeaveBtn) {
     menuLeaveBtn.onclick = () => {
-        if (confirm(currentLang === 'en' ? 'Leave the room and return to lobby?' : '現在の部屋から退出してロビーに戻りますか？')) {
-            location.reload();
-        }
+        openLeaveConfirmModal();
     };
 }
 
@@ -416,7 +466,10 @@ function joinRoom() {
     const name = playerNameInput.value.trim() || (currentLang === 'en' ? 'Player' : 'プレイヤー');
 
     if (!roomId) {
-        alert(currentLang === 'en' ? 'Please enter a room ID' : 'ルームIDを入力してください');
+        showNoticeModal(
+            currentLang === 'en' ? 'Please enter a room ID' : 'ルームIDを入力してください',
+            currentLang === 'en' ? '⚠️ Input Required' : '⚠️ 入力エラー'
+        );
         return;
     }
 
@@ -1231,8 +1284,7 @@ socket.on('gameOver', (message) => {
         winnerText.textContent = message;
         resultModal.classList.add('show');
     } else {
-        alert(message);
-        location.reload();
+        showNoticeModal(message, '🏆 GAME OVER');
     }
 });
 

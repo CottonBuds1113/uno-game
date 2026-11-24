@@ -228,5 +228,30 @@
             <button id="restart-btn" class="primary-btn" data-i18n="lobbyBtn" onclick="location.reload()">ロビーへ</button>
         </div>
     </div>
+
+    <!-- ▼ 退出確認モーダル -->
+    <div id="leave-confirm-modal" class="sys-modal-overlay">
+        <div class="sys-modal-card" style="max-width: 360px;">
+            <h3 id="leave-confirm-title">🚪 退出確認</h3>
+            <p id="leave-confirm-message" style="font-size: 14px; color: #ecf0f1; line-height: 1.6; margin-bottom: 20px;">
+                現在の部屋から退出してロビーに戻りますか？
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="confirm-leave-yes-btn" class="primary-btn" style="background-color: #e74c3c;">退出する</button>
+                <button id="confirm-leave-no-btn" class="primary-btn" onclick="closeSysModal('leave-confirm-modal')">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ▼ 通知モーダル（alert代替） -->
+    <div id="notice-modal" class="sys-modal-overlay">
+        <div class="sys-modal-card" style="max-width: 360px;">
+            <h3 id="notice-modal-title">ℹ️ お知らせ</h3>
+            <p id="notice-modal-message" style="font-size: 14px; color: #ecf0f1; line-height: 1.6; margin-bottom: 20px;"></p>
+            <div style="text-align: center;">
+                <button id="notice-modal-ok-btn" class="primary-btn" onclick="closeSysModal('notice-modal')">OK</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

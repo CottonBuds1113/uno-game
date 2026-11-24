@@ -1649,3 +1649,8 @@ button:disabled {
         height: 66px;
     }
 }
+
+#leave-confirm-modal .sys-modal-card,
+#notice-modal .sys-modal-card {
+    text-align: center;
+}
