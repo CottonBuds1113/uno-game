@@ -15,7 +15,7 @@ const translations = {
         roomPlaceholder: "ルームID (例: 1234)",
         ruleStack: "ドロー累積（+2/+4重ね）ルール",
         ruleSwap: "手札交換カード（スワップ）を含める",
-        ruleSpectator: "⚠観戦モード（オン）｜途中参加モード（オフ）⚠",
+        ruleSpectator: "⚔️ 参加モード（ON: 対戦参加 / OFF: 観戦）",
         ruleSameCard: "同一カードの重ね出しルール（複数枚同時出し）",
         createRoomBtn: "部屋を作る",
         joinRoomBtn: "部屋に参加",
@@ -88,7 +88,7 @@ const translations = {
         roomPlaceholder: "Room ID (e.g. 1234)",
         ruleStack: "Stacking Rule (+2 / +4)",
         ruleSwap: "Include Swap Hand Cards",
-        ruleSpectator: "⚠Spectator Mode (On) | Late-Join (Off)⚠",
+        ruleSpectator: "⚔️ Join Mode (ON: Play / OFF: Spectate)",
         ruleSameCard: "Stack Same Cards Rule (Play Multiple Cards)",
         createRoomBtn: "Create Room",
         joinRoomBtn: "Join Room",
@@ -245,7 +245,6 @@ function hideLoading() {
     if (overlay) overlay.classList.add('hidden');
 }
 
-// モーダルを上からスライド表示する共通関数
 function openSlideModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) return;
@@ -272,7 +271,6 @@ window.closeSysModal = function(modalId) {
     modal.style.display = 'none';
 };
 
-// 通知モーダルを表示する関数
 function showNoticeModal(message, title = null) {
     const titleEl = document.getElementById('notice-modal-title');
     const msgEl = document.getElementById('notice-modal-message');
@@ -290,7 +288,6 @@ function showNoticeModal(message, title = null) {
     openSlideModal('notice-modal');
 }
 
-// 退出確認モーダルを開く関数
 function openLeaveConfirmModal() {
     const titleEl = document.getElementById('leave-confirm-title');
     const msgEl = document.getElementById('leave-confirm-message');
@@ -496,7 +493,9 @@ function joinRoom() {
 
     const isStackEnabled = stackCheckbox ? stackCheckbox.checked : true;
     const allowSwapCard = swapCheckbox ? swapCheckbox.checked : true;
-    const allowSpectator = spectatorCheckbox ? spectatorCheckbox.checked : true;
+    // スイッチ ON = 対戦参加（観戦しない）、スイッチ OFF = 観戦する
+    const isJoinAsPlayer = spectatorCheckbox ? spectatorCheckbox.checked : true;
+    const allowSpectator = !isJoinAsPlayer;
     const isSameCardStackEnabled = sameCardCheckbox ? sameCardCheckbox.checked : true;
 
     currentRoomId = roomId;
@@ -511,6 +510,7 @@ function joinRoom() {
         isStackEnabled,
         allowSwapCard,
         allowSpectator,
+        isJoinAsPlayer,
         isSameCardStackEnabled
     });
 }
